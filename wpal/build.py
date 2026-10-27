@@ -24,6 +24,15 @@ from pathlib import Path
 from .parse import parse_file
 from .threads import build_threads
 
+# Covering indexes for the reader. Every query passes through the `visible`
+# view, which needs poster_key and name_key; without these, counting messages
+# per month reads every row, bodies included (40 s on a cold Fly volume).
+INDEXES = """
+CREATE INDEX IF NOT EXISTS messages_cover
+    ON messages(year, month, sent_at, thread_id, poster_key, name_key, from_name);
+CREATE INDEX IF NOT EXISTS messages_parent ON messages(parent_uid, sent_at);
+"""
+
 SCHEMA = """
 CREATE TABLE messages (
     id INTEGER PRIMARY KEY,
@@ -50,6 +59,7 @@ CREATE INDEX messages_ym ON messages(year, month, sent_at);
 CREATE INDEX messages_thread ON messages(thread_id, sent_at);
 CREATE INDEX messages_poster ON messages(poster_key);
 CREATE INDEX messages_name ON messages(name_key);
+""" + INDEXES + """
 
 CREATE TABLE threads (
     id INTEGER PRIMARY KEY,

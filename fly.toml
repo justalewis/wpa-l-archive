@@ -1,0 +1,46 @@
+# WPA-L Archive Reader on Fly.io.
+#
+# Required secret: WPAL_SECRET (Flask session key; signs the opt-out form's
+# CSRF token). Set with `flyctl secrets set WPAL_SECRET=...`.
+#
+# The archive database is uploaded to the volume, not built into the image.
+# Machines stop when idle and start on the next request, which keeps the bill
+# to the volume plus the minutes the machine is up.
+
+app = 'wpa-l-archive'
+primary_region = 'iad'
+
+[build]
+
+[env]
+  WPAL_DB = '/data/archive.db'
+  WPAL_REQUESTS_DB = '/data/requests.db'
+
+[[mounts]]
+  source = 'wpal_data'
+  destination = '/data'
+  initial_size = '3gb'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = 'requests'
+    soft_limit = 4
+    hard_limit = 8
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '20s'
+    method = 'GET'
+    path = '/robots.txt'
+
+[[vm]]
+  memory = '512mb'
+  cpus = 1
+  cpu_kind = 'shared'

@@ -1,8 +1,34 @@
 # WPA-L Archive Reader: working notes
 
-Status as of 2026-10-27. First working version, local only. Nothing is deployed or pushed,
-no one has been contacted, and all page text in `templates/` is placeholder (marked as such
-on the page) until Justin writes the public copy.
+Status as of 2026-10-27. Deployed at https://wpa-l-archive.fly.dev/ (Fly app
+`wpa-l-archive`, personal org, `iad`). The repo is not pushed anywhere, no one has been
+contacted, and all page text in `templates/` is placeholder (marked as such on the page)
+until Justin writes the public copy. The site is reachable by anyone with the URL; it is
+noindex, so search engines are asked not to list it.
+
+## Deploy
+
+- One `shared-cpu-1x` machine, 512 MB, that stops when idle and starts on the next request
+  (`auto_stop_machines = 'stop'`, `min_machines_running = 0`). Cost is the 3 GB volume plus
+  the minutes the machine runs. A cold start adds a second or two.
+- Volume `wpal_data` at `/data` holds `archive.db` (1.15 GB) and `requests.db` (opt-out
+  requests and suppressions). Fly snapshots the volume daily and keeps 5.
+- Secret: `WPAL_SECRET` (Flask session key for the form's CSRF token).
+- The database is not in the image. Code deploys (`flyctl deploy --ha=false --remote-only`)
+  ship only the app. To replace the database after a rebuild:
+  1. `gzip` `data/archive.db` (about 387 MB compressed).
+  2. Upload it with `flyctl ssh sftp put data/archive.db.gz /data/archive.db.gz`. In Git
+     Bash, set `MSYS_NO_PATHCONV=1` first, or the remote path is rewritten to a Windows path.
+  3. On the machine, `gunzip -c` it to `/data/archive.db.new` and `mv` it over
+     `archive.db`.
+  4. Compare MD5s with the local copy. Keep the machine awake during the upload: an SSH
+     session alone doesn't count as traffic for auto-stop.
+- `python -m wpal.migrate` adds new indexes to a deployed database in place. The covering
+  indexes matter: on a cold volume, any query that touches message bodies for every row
+  took about 40 s. With them, every page measured 0.2–2 s.
+- Reading opt-out requests: `flyctl ssh console -C "sqlite3 ..."` doesn't work because the
+  image has no sqlite3 CLI. Use `python -c` with the `sqlite3` module, or `sftp get`
+  `/data/requests.db`.
 
 ## State
 
@@ -140,8 +166,9 @@ Failure cases flagged in the build:
   credit, the 2019 Chair's Address and 2019–2020 governance crisis) plotted per month.
 - Bulk download (JSONL or SQLite, addresses already gone) behind a terms-of-use click.
 - Admin view for requests and suppressions; email verification for requests.
-- Fly.io deploy (one small machine with a volume, as Pinakes) after Justin approves. The DB is
-  1.15 GB, so a volume of 3 GB or more.
+- An email alert when an opt-out request arrives (requests now sit in `/data/requests.db`
+  until someone looks).
+- A custom domain, if one is wanted (`flyctl certs add`).
 - Public copy for the about and opt-out pages in Justin's voice (`justin-email` /
   `justin-writing-master`, then the extended `no-ai-trace` pass). No CompPile comparisons.
 - The NACR conversation (Justin's to start).

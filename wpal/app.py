@@ -197,9 +197,12 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
                            f"WHERE messages_fts MATCH ? AND {w} ORDER BY bm25(messages_fts) LIMIT ? OFFSET ?")
                     results = con().execute(sql, [fts_query(q), *params, PAGE + 1, (page - 1) * PAGE]).fetchall()
                 else:
+                    # Pick the page of ids from the covering index first, so bodies
+                    # are read for 50 rows rather than for every match.
                     results = con().execute(
-                        f"SELECT v.uid, v.thread_id, v.from_name, v.subject, v.sent_at, substr(v.body, 1, 200) snip "
-                        f"FROM visible v WHERE {w} ORDER BY v.sent_at LIMIT ? OFFSET ?",
+                        f"SELECT uid, thread_id, from_name, subject, sent_at, substr(body, 1, 200) snip "
+                        f"FROM main.messages WHERE id IN (SELECT v.id FROM visible v WHERE {w} "
+                        f"ORDER BY v.sent_at LIMIT ? OFFSET ?) ORDER BY sent_at",
                         [*params, PAGE + 1, (page - 1) * PAGE]).fetchall()
             except Exception:
                 error = "That search could not be read. Try plain words, or put a phrase in double quotes."

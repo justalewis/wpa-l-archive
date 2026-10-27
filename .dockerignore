@@ -1,0 +1,9 @@
+data/
+tests/
+tools/
+reports/
+.git/
+.claude/
+.pytest_cache/
+**/__pycache__/
+*.md
