@@ -35,7 +35,7 @@ rebuild, because Windows won't replace a database file another process has open.
 | 2010 | 9,453 | 90% | Message-ID starts appearing (38% of linked replies by header) |
 | 2011–2021 | 68,148 | 85% | Message-ID / In-Reply-To (91% of linked replies) |
 
-Volume peaks 2003–2013 (8,800–10,600 a year) and falls to about 2,700 in 2020.
+Volume runs 7,500–10,600 a year from 2003 to 2013 and falls to about 2,700 in 2020.
 
 Failure cases flagged in the build:
 
