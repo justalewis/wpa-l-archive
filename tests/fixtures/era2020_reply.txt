@@ -1,0 +1,118 @@
+=========================================================================
+Date:         Sun, 1 Mar 2020 15:56:25 -0500
+Reply-To:     Writing Program Administration <wpa-l@ASU.EDU>
+Sender:       Writing Program Administration <wpa-l@ASU.EDU>
+From:         Avery Quill <person1@example.edu>
+Subject:      Contacting an Admin
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="0000000000006d8778059fd14eb0"
+Message-ID:  <person2@example.edu>
+
+--0000000000006d8778059fd14eb0
+Content-Type: text/plain; charset="UTF-8"
+
+Hello all - I'm trying to contact an Admin of this group with just a few
+questions - I'm currently a doctoral candidate in Educational Technology
+(focused on writing centers) and I'm doing a little research on online
+communities - if an Admin here (or an Admin of a related group) can reach
+out to me, that would be extremely helpful - my contact info is below.
+
+Thanks!
+-Jamie
+
+-- 
+Avery Quill, MFA, MEd
+Writing Center Supervisor
+The Learning Center
+Example Community College
+Room 100
+1 Main Road
+Anytown, ST 00000
+555-0100
+person1@example.edu
+
+--0000000000006d8778059fd14eb0
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello all - I&#39;m trying to contact an Admin of this gro=
+up with just a few questions - I&#39;m currently a doctoral candidate in Ed=
+ucational Technology (focused on writing centers) and I&#39;m doing a littl=
+e research on online communities - if an Admin here (or an Admin of a relat=
+ed group) can reach out to me, that would be extremely helpful - my contact=
+ info is below.<div><br></div><div>Thanks!</div><div>-Jamie<br clear=3D"all"=
+><div><br></div>-- <br><div dir=3D"ltr" class=3D"gmail_signature" data-smar=
+tmail=3D"gmail_signature"><div dir=3D"ltr">Avery Quill, MFA, MEd<div>Writi=
+ng Center Supervisor</div><div>The Learning Center</div>=
+<div>Example Community College</div><div>Room 100</div><div>1 Main Ro=
+ad</div><div>Anytown, ST 00000</div><div>555-0100</div><div><a href=3D"=
+mailto:person1@example.edu" target=3D"_blank">person1@example.edu</a></div>=
+</div></div></div></div>
+
+--0000000000006d8778059fd14eb0--
+=========================================================================
+Date:         Sun, 1 Mar 2020 16:52:45 -0500
+Reply-To:     Writing Program Administration <wpa-l@ASU.EDU>
+Sender:       Writing Program Administration <wpa-l@ASU.EDU>
+From:         Rowan Ledger <person3@example.edu>
+Subject:      Re: Contacting an Admin
+X-To:         Writing Program Administration <wpa-l@asu.edu>
+In-Reply-To:  <person2@example.edu>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="000000000000fd4053059fd217a5"
+Message-ID:  <person4@example.edu>
+
+--000000000000fd4053059fd217a5
+Content-Type: text/plain; charset="UTF-8"
+
+Jamie, you might find contact information on the CWPA website: wpacouncil.org
+
+On Sun, Mar 1, 2020, 4:10 PM Avery Quill <person1@example.edu> wrote:
+
+> Hello all - I'm trying to contact an Admin of this group with just a few
+> questions - I'm currently a doctoral candidate in Educational Technology
+> (focused on writing centers) and I'm doing a little research on online
+> communities - if an Admin here (or an Admin of a related group) can reach
+> out to me, that would be extremely helpful - my contact info is below.
+>
+> Thanks!
+> -Jamie
+>
+> --
+> Avery Quill, MFA, MEd
+> Writing Center Supervisor
+> The Learning Center
+> Example Community College
+> Room 100
+> 1 Main Road
+> Anytown, ST 00000
+> 555-0100
+> person1@example.edu
+>
+
+--000000000000fd4053059fd217a5
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"auto">Jamie, you might find contact information on the CWPA webs=
+ite: <a href=3D"http://wpacouncil.org">wpacouncil.org</a></div><br><div cla=
+ss=3D"gmail_quote"><div dir=3D"ltr" class=3D"gmail_attr">On Sun, Mar 1, 202=
+0, 4:10 PM Avery Quill &lt;<a href=3D"mailto:person1@example.edu">person9=
+@example.edu</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=
+=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><div dir=
+=3D"ltr">Hello all - I&#39;m trying to contact an Admin of this group with =
+just a few questions - I&#39;m currently a doctoral candidate in Educationa=
+l Technology (focused on writing centers) and I&#39;m doing a little resear=
+ch on online communities - if an Admin here (or an Admin of a related group=
+) can reach out to me, that would be extremely helpful - my contact info is=
+ below.<div><br></div><div>Thanks!</div><div>-Jamie<br clear=3D"all"><div><b=
+r></div>-- <br><div dir=3D"ltr" data-smartmail=3D"gmail_signature"><div dir=
+=3D"ltr">Avery Quill, MFA, MEd<div>Writing Center Supervisor</div><div>The=
+ Example Learning Assistance Center</div><div>Example Community College</div=
+><div>Room 100</div><div>1 Main Road</div><div>Anytown, ST 00000</di=
+v><div>555-0100</div><div><a href=3D"mailto:person1@example.edu" target=
+=3D"_blank" rel=3D"noreferrer">person1@example.edu</a></div></div></div></d=
+iv></div>
+</blockquote></div>
+
+--000000000000fd4053059fd217a5--

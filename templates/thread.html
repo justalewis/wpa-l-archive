@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ t.subject }} · WPA-L Archive Reader{% endblock %}
+{% block body %}
+<p class="crumbs"><a href="{{ url_for('home') }}">All years</a>{% if t.year %} / <a href="{{ url_for('year_view', year=t.year) }}">{{ t.year }}</a> / <a href="{{ url_for('month_view', year=t.year, month=t.month) }}">{{ MONTHS[t.month] }}</a>{% endif %}</p>
+<h1>{{ t.subject }}</h1>
+<p class="meta">{{ msgs|length }} message{{ "s" if msgs|length != 1 }}, {{ t.started_at|when("%d %b %Y") }} to {{ t.last_at|when("%d %b %Y") }}.
+{% if withheld > 0 %}{{ withheld }} message{{ "s" if withheld != 1 }} withdrawn at the poster's request.{% endif %}</p>
+{% for m in msgs %}
+<article class="msg" id="{{ m.uid }}">
+  <header>
+    <span class="who">{{ m.from_name }}</span>
+    <a class="when" href="{{ url_for('message', uid=m.uid) }}">{{ m.sent_at|when }}</a>
+    {% if m.parent_uid and m.parent_uid in names %}<span class="re">replying to <a href="#{{ m.parent_uid }}">{{ names[m.parent_uid] }}</a></span>{% endif %}
+  </header>
+  {% if m.subject != t.subject %}<p class="subj">{{ m.subject }}</p>{% endif %}
+  <div class="body">{{ m.body|render_body }}</div>
+</article>
+{% endfor %}
+{% endblock %}

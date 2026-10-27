@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ MONTHS[month] }} {{ year }} · WPA-L Archive Reader{% endblock %}
+{% block body %}
+<p class="crumbs"><a href="{{ url_for('home') }}">All years</a> / <a href="{{ url_for('year_view', year=year) }}">{{ year }}</a> / {{ MONTHS[month] }}</p>
+<h1>{{ MONTHS[month] }} {{ year }}</h1>
+<p class="meta">{{ "{:,}".format(n) }} messages. Threads are listed by their first message this month; counts are for this month only.</p>
+<ol class="threads">
+{% for r in rows %}
+  <li><a href="{{ url_for('thread', tid=r.thread_id) }}">{{ r.subject or "(no subject)" }}</a>
+    <span class="meta">{{ r.starter }} · {{ r.first_at|when("%d %b") }} · {{ r.n }} message{{ "s" if r.n != 1 }}</span></li>
+{% endfor %}
+</ol>
+<p class="pager">{% if page > 1 %}<a href="?page={{ page-1 }}">← Earlier</a>{% endif %} {% if more %}<a href="?page={{ page+1 }}">Later →</a>{% endif %}</p>
+{% endblock %}

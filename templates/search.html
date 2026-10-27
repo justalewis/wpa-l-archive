@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Search · WPA-L Archive Reader{% endblock %}
+{% block body %}
+<h1>Search</h1>
+<form class="search" method="get" role="search">
+  <div class="f"><label for="q">Words or "a phrase"</label><input id="q" name="q" type="search" value="{{ q }}"></div>
+  <div class="f"><label for="from">Posted by (name contains)</label><input id="from" name="from" value="{{ who }}"></div>
+  <div class="f small"><label for="start">From year</label><input id="start" name="start" type="number" min="1993" max="2021" value="{{ start or '' }}"></div>
+  <div class="f small"><label for="end">To year</label><input id="end" name="end" type="number" min="1993" max="2021" value="{{ end or '' }}"></div>
+  <button type="submit">Search</button>
+</form>
+{% if error %}<p class="err">{{ error }}</p>{% endif %}
+{% if q or who %}
+<p class="meta">{{ "{:,}".format(n) }} message{{ "s" if n != 1 }}{% if q %}, ranked by relevance{% else %}, oldest first{% endif %}.</p>
+{% if by_year %}
+{% set peak = by_year|map(attribute='n')|max %}
+<figure class="hist">
+  <figcaption>Matches per year</figcaption>
+  <svg viewBox="0 0 406 66" role="img" aria-label="Bar chart of matches per year">
+  {% for r in by_year %}{% set h = (r.n / peak * 50)|round(1) %}
+    <g><title>{{ r.year }}: {{ "{:,}".format(r.n) }}</title>
+    <rect class="hit" x="{{ (r.year - 1993) * 14 }}" y="0" width="14" height="54"></rect>
+    <rect class="bar" x="{{ (r.year - 1993) * 14 + 2 }}" y="{{ 54 - h }}" width="10" height="{{ h }}" rx="2"></rect></g>
+  {% endfor %}
+    <line class="base" x1="0" x2="406" y1="54" y2="54"></line>
+    <text class="axis" x="0" y="65">1993</text><text class="axis" x="406" y="65" text-anchor="end">2021</text>
+  </svg>
+</figure>
+{% endif %}
+<ol class="results">
+{% for r in results %}
+  <li><a href="{{ url_for('message', uid=r.uid) }}">{{ r.subject or "(no subject)" }}</a>
+    <span class="meta">{{ r.from_name }} · {{ r.sent_at|when("%d %b %Y") }} · <a href="{{ url_for('thread', tid=r.thread_id) }}#{{ r.uid }}">thread</a></span>
+    <p class="snip">{{ r.snip|snip }}</p></li>
+{% endfor %}
+</ol>
+<p class="pager">{% if page > 1 %}<a href="{{ url_for('search', q=q, from=who, start=start, end=end, page=page-1) }}">← Previous</a>{% endif %}
+{% if more %}<a href="{{ url_for('search', q=q, from=who, start=start, end=end, page=page+1) }}">Next →</a>{% endif %}</p>
+{% endif %}
+{% endblock %}

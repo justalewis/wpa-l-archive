@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Timeline · WPA-L Archive Reader{% endblock %}
+{% block body %}
+<h1>Messages per month</h1>
+<p class="lede">Every month from January 1993 to May 2021. Hover a bar for its count; select it to open that month. The table below gives yearly totals.</p>
+{% set W = 6 %}{% set X0 = 44 %}{% set WIDTH = 29 * 12 * W + X0 %}
+<figure class="timeline">
+  <svg viewBox="0 0 {{ WIDTH }} 236" role="img" aria-label="Bar chart of messages per month, 1993 to 2021">
+    {% for tick in [peak // 2, peak] %}{% set y = 210 - (tick / peak * 190) %}
+      <line class="grid" x1="{{ X0 }}" x2="{{ WIDTH }}" y1="{{ y }}" y2="{{ y }}"></line>
+      <text class="axis" x="{{ X0 - 6 }}" y="{{ y + 4 }}" text-anchor="end">{{ "{:,}".format(tick) }}</text>
+    {% endfor %}
+    {% for r in rows %}{% set i = (r.year - 1993) * 12 + r.month - 1 %}{% set h = (r.n / peak * 190)|round(1) %}
+      <a href="{{ url_for('month_view', year=r.year, month=r.month) }}"><g><title>{{ MONTHS[r.month] }} {{ r.year }}: {{ "{:,}".format(r.n) }} messages</title>
+        <rect class="hit" x="{{ X0 + i * W }}" y="10" width="{{ W }}" height="200"></rect>
+        <rect class="bar" x="{{ X0 + i * W + 1 }}" y="{{ 210 - h }}" width="{{ W - 2 }}" height="{{ h }}" rx="1"></rect></g></a>
+    {% endfor %}
+    <line class="base" x1="{{ X0 }}" x2="{{ WIDTH }}" y1="210" y2="210"></line>
+    {% for y in range(1993, 2022, 4) %}
+      <text class="axis" x="{{ X0 + (y - 1993) * 12 * W }}" y="228">{{ y }}</text>
+    {% endfor %}
+  </svg>
+</figure>
+<h2>By year</h2>
+<table class="data">
+  <thead><tr><th scope="col">Year</th><th scope="col">Messages</th><th scope="col">Threads</th></tr></thead>
+  <tbody>{% for r in per_year %}<tr><th scope="row"><a href="{{ url_for('year_view', year=r.year) }}">{{ r.year }}</a></th><td>{{ "{:,}".format(r.n) }}</td><td>{{ "{:,}".format(r.t) }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endblock %}

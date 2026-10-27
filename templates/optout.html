@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Opt out · WPA-L Archive Reader{% endblock %}
+{% block body %}
+<h1>Withdraw your messages from this reader</h1>
+<p class="placeholder">[Draft placeholder; final wording to come.] If you posted to WPA-L and don't want your messages shown here, send this form. Once the request is confirmed, your messages stop appearing in browsing, threads, search, and permalinks. This does not change the copy on the Internet Archive.</p>
+{% if errors %}<ul class="err">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+<form class="optout" method="post">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+  <div class="f"><label for="name_as_posted">Name your messages were posted under</label>
+    <input id="name_as_posted" name="name_as_posted" required maxlength="200" value="{{ form.name_as_posted }}"></div>
+  <div class="f"><label for="other_names">Other names or spellings you posted under (optional)</label>
+    <input id="other_names" name="other_names" maxlength="500" value="{{ form.other_names }}"></div>
+  <div class="f"><label for="example_links">Links to one or two of your messages here (optional; helps match them)</label>
+    <textarea id="example_links" name="example_links" rows="2" maxlength="2000">{{ form.example_links }}</textarea></div>
+  <div class="f"><label for="contact">How to reach you to confirm the request</label>
+    <input id="contact" name="contact" required maxlength="200" value="{{ form.contact }}">
+    <p class="hint">Used only to confirm this request. It is not shown anywhere in the reader.</p></div>
+  <fieldset class="f"><legend>Whose messages are these?</legend>
+    <label><input type="radio" name="relationship" value="self" {{ "checked" if form.relationship == "self" }}> Mine</label>
+    <label><input type="radio" name="relationship" value="representative" {{ "checked" if form.relationship == "representative" }}> I'm asking for the poster, with their agreement</label>
+    <label><input type="radio" name="relationship" value="estate" {{ "checked" if form.relationship == "estate" }}> The poster has died; I'm family or the executor</label>
+  </fieldset>
+  <div class="f"><label for="note">Anything else (optional)</label>
+    <textarea id="note" name="note" rows="3" maxlength="2000">{{ form.note }}</textarea></div>
+  <button type="submit">Send request</button>
+</form>
+{% endblock %}

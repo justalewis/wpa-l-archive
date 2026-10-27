@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>WPA-L, 1993–2021</h1>
+<p class="lede">{{ "{:,}".format(total) }} messages from the Writing Program Administration list, by year and month. Each cell shows that month's volume; follow a year or month to read its threads.</p>
+<form class="search-inline" action="{{ url_for('search') }}" method="get" role="search">
+  <label for="q" class="vh">Search the archive</label>
+  <input id="q" name="q" type="search" placeholder="Search messages, e.g. &quot;dual credit&quot;">
+  <button type="submit">Search</button>
+</form>
+<div class="scroll">
+<table class="years">
+  <caption class="vh">Messages per month</caption>
+  <thead><tr><th scope="col">Year</th>{% for m in range(1,13) %}<th scope="col">{{ MONTHS[m][:3] }}</th>{% endfor %}<th scope="col">Total</th></tr></thead>
+  <tbody>
+  {% for y, counts in years.items() %}
+  <tr>
+    <th scope="row"><a href="{{ url_for('year_view', year=y) }}">{{ y }}</a></th>
+    {% for n in counts %}
+    <td>{% if n %}<a href="{{ url_for('month_view', year=y, month=loop.index) }}" title="{{ MONTHS[loop.index] }} {{ y }}: {{ n }} messages" class="cell w{{ ((n / peak) * 8)|round(0, 'ceil')|int }}">{{ n }}</a>{% else %}<span class="none">–</span>{% endif %}</td>
+    {% endfor %}
+    <td class="tot">{{ "{:,}".format(counts|sum) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

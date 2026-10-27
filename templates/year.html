@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ year }} · WPA-L Archive Reader{% endblock %}
+{% block body %}
+<p class="crumbs"><a href="{{ url_for('home') }}">All years</a> / {{ year }}</p>
+<h1>{{ year }}</h1>
+<ul class="months">
+{% for r in months %}
+  <li><a href="{{ url_for('month_view', year=year, month=r.month) }}">{{ MONTHS[r.month] }}</a>
+      <span class="meta">{{ "{:,}".format(r.n) }} messages in {{ "{:,}".format(r.t) }} threads</span></li>
+{% endfor %}
+</ul>
+<p class="pager">{% if year > 1993 %}<a href="{{ url_for('year_view', year=year-1) }}">← {{ year-1 }}</a>{% endif %}
+{% if year < 2021 %}<a href="{{ url_for('year_view', year=year+1) }}">{{ year+1 }} →</a>{% endif %}</p>
+{% endblock %}

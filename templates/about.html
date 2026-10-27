@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}About · WPA-L Archive Reader{% endblock %}
+{% block body %}
+<h1>About this reader</h1>
+<p class="placeholder">[Draft placeholder. The public about page has not been written; this is a working description.]</p>
+<h2>What is here</h2>
+<p>The monthly LISTSERV logs of WPA-L from its years at Arizona State University, January 1993 to May 2021, as deposited on the Internet Archive ("WPA-L Archive 1993–2021 Complete Uncompressed"). The logs are split into messages, threaded, and indexed for search.</p>
+<h2>What is changed</h2>
+<ul>
+  <li>Email addresses are removed from headers, bodies, signatures, and quoted lines.</li>
+  <li>Attachments are left out; a message lists the types it carried.</li>
+  <li>Names appear as posted. Where a From line had only an address, the name comes from the same address's other posts; if there were none, the message shows "Unnamed poster."</li>
+  <li>The site asks search engines not to index it.</li>
+</ul>
+<h2>How threads are rebuilt</h2>
+<p>From about 2010 the logs keep each message's Message-ID, so replies link to their parents directly. Before that, messages are grouped by subject line (ignoring "Re:" and "Fwd:") within a 30-day window, and a reply's parent is the earlier message whose author its "X wrote:" line names. Some long-running subjects will be split and some generic ones merged.</p>
+{% if cov.years %}
+<h2>Coverage</h2>
+<p class="meta">Built {{ built }} from {{ cov.files }} monthly files.</p>
+<div class="scroll">
+<table class="data">
+<thead><tr><th scope="col">Year</th><th scope="col">Messages</th><th scope="col">Dated</th><th scope="col">In a thread</th><th scope="col">Linked by header</th><th scope="col">Unnamed</th></tr></thead>
+<tbody>{% for y in cov.years %}<tr><th scope="row">{{ y.year }}</th><td>{{ "{:,}".format(y.messages) }}</td><td>{{ "{:,}".format(y.dated) }}</td><td>{{ "{:,}".format(y.threaded) }}</td><td>{{ "{:,}".format(y.via_header) }}</td><td>{{ "{:,}".format(y.unnamed) }}</td></tr>{% endfor %}</tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}
