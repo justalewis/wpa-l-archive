@@ -1,134 +1,147 @@
 # WPA-L Archive Reader: working notes
 
-Status as of 2026-10-27 (save point, mid-build). Nothing is deployed, nothing is pushed,
-no one has been contacted, and all page text in `templates/` is placeholder.
+Status as of 2026-10-27. First working version, local only. Nothing is deployed or pushed,
+no one has been contacted, and all page text in `templates/` is placeholder (marked as such
+on the page) until Justin writes the public copy.
 
-## Where things stand
+## State
 
-| Step | State |
+| Piece | State |
 |---|---|
-| Repo, design tokens (Alexandrian Suite `tokens.css`, `fonts.css`, `fonts/` copied from Pinakes) | done |
-| IA file list | done: the item holds **341 monthly logs + README** (3.57 GB). The "346" count is the item's total file count, which includes the torrent and IA metadata files. 2021 has 5 months (Jan–May). |
-| Download to `data/raw/` (gitignored) | **149 of 341 done.** See "Resume" below. |
-| Parser `wpal/parse.py`, threading `wpal/threads.py` | written; 28 tests pass on fixtures from 1993, 1995, 1999, 2006, 2011, 2020 |
-| Build `wpal/build.py` (SQLite + FTS5 + coverage report) | written; run on 1993 only so far (782 messages, all dated) |
-| Flask reader `wpal/app.py`, `templates/`, `static/reader.css` | written; imports and serves `/` against the 1993 test DB. **Not yet checked in the browser pane.** |
-| App tests (suppression honored everywhere, noindex headers, opt-out POST) | not written |
-| Full build, coverage table, browser check | not done |
+| Source | 341 monthly logs + README from the IA item (3.57 GB), all MD5-verified against IA's metadata, in `data/raw/` (gitignored, never modified). The "346" count is the item's total file count, which includes the torrent and IA metadata files. 2021 has Jan–May. |
+| Parser, threading | `wpal/parse.py`, `wpal/threads.py`; 40 parser tests on fixtures from 1993, 1995, 1999, 2006, 2011, 2020 |
+| Build | `python -m wpal.build` → `data/archive.db` (1.15 GB, FTS5) in about 9 minutes; writes `reports/coverage.md` |
+| Reader | `wpal/app.py` (Flask): browse by year and month, thread view, permalinks with a citation line, keyword/phrase + name + year search with a per-year match chart, messages-per-month timeline, opt-out form; 12 app tests |
+| Browser check | done in the pane: home, month, thread, permalink, search, timeline, opt-out submit, a live suppression (410 on the permalink, "1 message withdrawn" on the thread, totals drop), light/dark, 375 px width |
 
-## Resume
+Run locally:
 
-1. Finish the download. A single direct call worked with curl (Python's urllib hit an
-   expired-certificate error on some IA mirror hosts; do not turn off verification). The
-   job list is regenerated from `ia_meta.json`, skipping files already at full size:
+```bash
+python -m flask --app wpal.app run --port 5057
+```
 
-   ```bash
-   curl -sS https://archive.org/metadata/WPA-L-1993-2021-Complete-Uncompresse -o ia_meta.json
-   ```
+`.claude/launch.json` has the same command as `wpal-reader`. Stop the server before a
+rebuild, because Windows won't replace a database file another process has open.
 
-   then loop `curl -sSL --retry 3 -o data/raw/YYYY/YYYY-MM.txt <url>` over the missing
-   files, three or four at a time, checking each file's size against the metadata.
-   Generate the list with Unix line endings (a `\r` in the size field is what made the
-   first curl pass reject good files).
-2. `python -m wpal.build` (all files; expect tens of minutes and a DB of a few GB).
-   It writes `data/archive.db` and `reports/coverage.md`.
-3. Write `tests/test_app.py`: build a DB from the fixtures (copy them to a temp dir as
-   `YYYY-MM.txt`), add a `suppression` row, and assert the poster disappears from month,
-   thread, permalink (410), search, and timeline; check `X-Robots-Tag`, robots meta and
-   `/robots.txt`; post the opt-out form.
-4. Add `.claude/launch.json` (`flask --app wpal.app run --port 5057`), run it in the
-   browser pane, and check each page in light and dark.
-5. Fill in parse coverage below, commit.
+## Parse coverage (full build)
 
-## Format findings (from spot reads across eras)
+186,436 messages; 186,429 dated; 161,961 (87%) in a thread of two or more; 45,660 threads,
+21,185 with replies. Full per-year table in `reports/coverage.md`.
+
+| Era | Messages | In a thread | How replies were linked |
+|---|---:|---:|---|
+| 1993–1999 | 26,337 | 87% | subject + time window; siblings sharing an In-Reply-To |
+| 2000–2009 | 82,498 | 88% | same; no Message-ID in the logs |
+| 2010 | 9,453 | 90% | Message-ID starts appearing (38% of linked replies by header) |
+| 2011–2021 | 68,148 | 85% | Message-ID / In-Reply-To (91% of linked replies) |
+
+Volume peaks 2003–2013 (8,800–10,600 a year) and falls to about 2,700 in 2020.
+
+Failure cases flagged in the build:
+
+- **HTML-only** (2,174), mostly 2002–2005 and 2013–14: text comes from a crude HTML strip and
+  reads a little rough.
+- **Duplicate ids** (135): the same message logged twice (identical raw bytes or a resent
+  Message-ID). Both copies are kept; the second gets `-2`.
+- **No timezone** (122) or **unparsed date** (7): times treated as UTC, or month taken from
+  the log file.
+- **Date outside the log's month** (102): sender's clock was wrong; filed under the log month.
+- **No text part** (75): attachment-only posts.
+- **No From** (36), **Unnamed poster** (974): address-only From lines with no other post to
+  borrow a name from, concentrated in 1993–96 (BITNET) and 2001–03.
+- **Leak audit: 0.** A looser second pattern finds no address-like strings in any stored
+  subject, name or body.
+
+## Format findings
 
 - Every file is a LISTSERV notebook log: messages separated by a line of exactly 73 `=`,
-  each starting with a column-aligned `Date:` / `Reply-To:` / `Sender:` / `From:` /
-  `Subject:` block. The split anchors on that line followed by `Date:`.
-- 1993–late 1990s: plain ASCII, no MIME. The header block ends with a line holding a single
-  space, not an empty line (the parser treats it as the end of headers). Many From lines are
-  bare addresses (`ewhite@...`, BITNET `C509379@MIZZOU1`) with no display name. Some 1995
-  bodies are hard-wrapped at 80 columns mid-word, so an address can be split across lines.
-- Late 1990s on: MIME headers; quoted-printable common; some 2000s clients double-encoded QP
-  (`=3D` left after one decode), which the parser undoes when the leftovers are plentiful.
-- Attachments (Word files, `winmail.dat`, images) are inlined as base64. That is most of the
-  3.5 GB; 2010 onward runs 170–365 MB a year.
-- **No `Message-ID` before about 2010**, and only scattered ones in 2008–2010. Earlier
-  `In-Reply-To` values name messages the log never kept, so pre-2010 threading leans on
-  normalized subjects (30-day window for replies, 3 days for unmarked posts), plus "siblings
-  that share an In-Reply-To belong together." From 2011 every message has a Message-ID and
-  header threading works.
-- Older `In-Reply-To: Message of <date> from <address>` lines name a person, not a message;
-  the parser ignores them for linking.
-- Message-IDs sometimes embed an address (Entourage: `<...%name@host>`). Only hashes of IDs
-  are stored.
-- `X-To` / `X-cc` headers carry other lists' names and addresses; they are not stored.
+  each opening with a column-aligned `Date` / `Reply-To` / `Sender` / `From` / `Subject`
+  block. Early logs end the header block with a line holding one space, not a blank line.
+- 1990s: plain ASCII, no MIME; many bare-address From lines; some bodies hard-wrapped at 80
+  columns mid-word. Late 1990s on: MIME, quoted-printable (some double-encoded in the 2000s),
+  base64 attachments inline. Attachments are most of the 3.5 GB.
+- No Message-ID before 2010. Older `In-Reply-To: Message of <date> from <address>` names a
+  person, not a message. Some clients reused one In-Reply-To value across unrelated replies;
+  joining on it alone chained a "Job Announcement" post to two months of other threads, so a
+  shared In-Reply-To now joins only when subjects agree. Generic subjects ("Job
+  Announcement", "CFP", "question") never join on subject alone.
+- **Addresses hide in more places than headers and signatures:**
+  - Outlook safe-links carry the reader's address in the URL (`%7Cname%40school.edu`). This
+    affected over 1,100 spots in 2020 alone. Safe-links are now unwrapped to their real
+    target.
+  - Proofpoint and URLDefense rewrap those links again (`-2540`, `%2540`, `*40`).
+  - Addresses get glued to URL-encoding or to neighboring text (`%22%20name@...`).
+  - People spelled them out to dodge harvesters (`name at school dot edu`).
 
-## What the parser stores and drops
+  All of these are scrubbed and covered by tests.
+- Top-posted Outlook replies quote the earlier message without `>` marks, so the reader
+  folds `>`-quoted text but shows Outlook-style quotes in full. Detecting `From: … Sent: …`
+  blocks would fix most of it.
 
-- Stored: date (UTC), display name as posted, subject, plain-text body, attachment content
+## What is stored and what is dropped
+
+- Stored: UTC date, display name as posted, subject, plain-text body, attachment content
   types, source file and position, a stable id, a salted poster hash.
-- Dropped: every email address, in headers, bodies, signatures, `X wrote:` lines, GroupWise
-  `>>> addr date >>>` lines, and `mailto:` links. Old forms (`user @ HOST`, `user@@host`,
-  quoted local parts) are covered; `@handle` and `meet @ 3pm` are left alone.
-- Name recovery: when a From line had only an address, the name comes from the same address's
-  other posts (114 recovered in 1993 alone); otherwise "Unnamed poster" (117 in 1993).
-  Addresses exist only in memory during the build.
-- Stable id: hash of the Message-ID when there is one, otherwise of the raw header block and
-  first 4 KB of raw body, so parser changes don't move permalinks.
-- Poster hash: HMAC-SHA256 of the lowercased address with a salt in `data/poster.salt`
-  (gitignored). **Keep that file**: losing it re-keys every poster and breaks address-keyed
-  suppressions.
+- Dropped: every email address (headers, bodies, signatures, `X wrote:` lines, GroupWise
+  `>>>` lines, mailto links, encoded and spelled-out forms); `X-To`/`X-cc` headers;
+  attachments; raw Message-IDs (only hashes kept, since some embed addresses).
+- Names: where a From line had only an address, the name comes from that address's other
+  posts (1,856 recovered); otherwise "Unnamed poster". Addresses exist only in memory
+  during the build.
+- Permalink ids hash the Message-ID, or the raw header block and first 4 KB of raw body, so
+  parser changes don't move them (confirmed across three rebuilds).
+- Poster hash: HMAC-SHA256 of the address with `data/poster.salt` (gitignored). **Back that
+  file up**: losing it re-keys every poster and breaks address-keyed suppressions.
+- Kept, and personal: phone numbers and street addresses in signatures; tracking parameters
+  in URLs (`user_id=…`).
 
-Known gaps: addresses split across hard-wrapped lines; addresses spelled out ("jdoe at
-uni dot edu"); phone numbers and street addresses in signatures are kept (they are not
-email addresses, but they are personal).
-
-## Opt-out design (built, not yet browser-checked)
+## Opt-out design
 
 - `data/requests.db` (gitignored, separate from the rebuildable archive DB) holds
   `optout_requests` and `suppression` (kind `poster` keyed on poster hash, or `name` keyed on
-  a normalized name).
-- Every reader query goes through a temp view `visible` that drops suppressed rows. A
-  withdrawn permalink returns 410; a thread notes how many messages were withdrawn.
-- The form records requests only; nothing is suppressed until Justin reviews one. There is
-  no admin screen yet; suppressions are added with SQL for now.
+  sorted lowercase name tokens).
+- Every reader query goes through a temp view `visible`. A withdrawn permalink returns 410;
+  a thread says how many messages were withdrawn; search, browse counts and the timeline
+  leave them out.
+- The form records a request and suppresses nothing until Justin reviews it. There is no
+  admin screen yet; suppressions are added by SQL.
 
 ## Open ethics and policy questions (for Justin)
 
 1. **Verifying opt-outs.** The archive no longer holds addresses, so "reply from the address
-   you posted from" can't be checked against our data. Options: check against the IA copy by
-   hand; accept a reply from a current institutional address plus a match on name and
-   example posts; or honor any plausible request, on the view that withdrawing from a
-   reading room costs little. Estates and representatives need a rule too.
-2. **Quoted text.** An opted-out poster's words survive inside other people's replies, with
-   their name in the `X wrote:` line. Choices: leave as is; strip the attribution name;
-   collapse quote blocks attributed to them; or redact them. The poster hash can't see
-   these, so this would key on the name.
-3. **Name-keyed vs. address-keyed suppression.** Names collide (two people, one name) and
-   one person posts under several names. Address-keyed is precise but needs the requester's
-   old addresses, which we'd hash at request time against the salt.
-4. **Noindex vs. discoverability.** Noindex keeps name searches from landing here but also
-   hides the archive from people who would want it. A middle path: index the home, year and
-   month pages and about page; keep threads and messages noindex.
-5. **The "posted by" search filter.** Useful for research; it is also a name lookup. Could
-   require a keyword alongside it.
-6. **Terms of use for the bulk download.** Needs wording on research use, no re-publication
-   of contact details, honoring withdrawals in derived datasets, and a citation request.
-7. **Signatures.** Phone numbers and street addresses are personal data the deposit carries.
-   Strip trailing signature blocks, or leave them?
-8. **Fixtures.** `tests/fixtures/` holds real list text with addresses, sender names, phone
-   numbers and a few named people swapped for fake ones (`tools/make_fixtures.py`). Other
+   you posted from" can't be checked against our data. Options: check against the IA copy
+   by hand; accept a current institutional address plus a match on name and example posts;
+   or honor any plausible request, since withdrawing from a reading room costs little.
+   Estates and representatives need a rule too.
+2. **Quoted text.** An opted-out poster's words survive inside others' replies, with their
+   name in the `X wrote:` line (and in Outlook `From:` blocks). Leave, strip the name,
+   collapse their quote blocks, or redact? The poster hash can't see these, so this would
+   key on the name.
+3. **Name vs. address keys.** Names collide and people post under variants ("Rice, Rich" /
+   "Rich Rice"). Address-keyed is precise but needs the requester's old addresses, hashed at
+   request time against the salt.
+4. **Noindex vs. discoverability.** Noindex keeps name searches from landing here but hides
+   the archive from people who'd want it. Middle path: index home, year, month and about
+   pages; keep threads and messages noindex.
+5. **The "posted by" search field** is also a name lookup. Require a keyword with it?
+6. **Bulk-download terms**: research use, no republishing contact details, honor withdrawals
+   in derived datasets, a citation request.
+7. **Signatures**: strip trailing signature blocks (phones, street addresses), or keep the
+   record as posted?
+8. **Fixtures**: `tests/fixtures/` holds real list text with addresses, sender names, phone
+   numbers and some named people swapped for fake ones (`tools/make_fixtures.py`). Other
    names in bodies remain (e.g. a 2011 board announcement). Review before the repo goes
    public.
 
-## Next steps (after the reader works)
+## Next steps
 
-- Topic timelines: saved queries (labor, assessment, Turnitin/plagiarism software,
-  dual credit, the 2019–2020 governance crisis) plotted per month.
+- Fold Outlook-style quoted blocks; better HTML-to-text for the 2,174 HTML-only posts.
+- Topic timelines: saved queries (labor, assessment, Turnitin/plagiarism software, dual
+  credit, the 2019 Chair's Address and 2019–2020 governance crisis) plotted per month.
 - Bulk download (JSONL or SQLite, addresses already gone) behind a terms-of-use click.
-- Admin view for requests and suppressions.
-- Fly.io deploy (one small machine with a volume, as Pinakes), only after Justin approves.
-- Final public copy in Justin's voice (`justin-email` / `justin-writing-master`, then the
-  extended `no-ai-trace` pass). No CompPile comparisons.
-- NACR conversation (Justin's to start).
+- Admin view for requests and suppressions; email verification for requests.
+- Fly.io deploy (one small machine with a volume, as Pinakes) after Justin approves. The DB is
+  1.15 GB, so a volume of 3 GB or more.
+- Public copy for the about and opt-out pages in Justin's voice (`justin-email` /
+  `justin-writing-master`, then the extended `no-ai-trace` pass). No CompPile comparisons.
+- The NACR conversation (Justin's to start).

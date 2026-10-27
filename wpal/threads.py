@@ -27,7 +27,10 @@ REPLY_WINDOW = timedelta(days=30)
 FRESH_WINDOW = timedelta(days=3)
 # Subjects too generic to join on without a header link.
 GENERIC = {"", "question", "help", "query", "request", "thanks", "thank you",
-           "hello", "hi", "info", "information", "test", "no subject", "inquiry"}
+           "hello", "hi", "info", "information", "test", "no subject", "inquiry",
+           "job announcement", "job posting", "job", "position announcement", "position",
+           "announcement", "cfp", "call for papers", "call for proposals", "call for submissions",
+           "new book", "conference announcement", "query", "survey", "request for help"}
 
 
 @dataclass
@@ -67,6 +70,7 @@ def build_threads(messages: list[Message]) -> ThreadResult:
     method_of: dict[str, str] = {}
     threads: dict[int, Thread] = {}
     author: dict[str, str] = {}
+    subject_key: dict[str, str] = {}
     next_tid = 1
 
     def start(m: Message, key: str) -> int:
@@ -79,6 +83,7 @@ def build_threads(messages: list[Message]) -> ThreadResult:
     for m in order:
         author[m.uid] = _name_key(m.from_name)
         key = normalize_subject(m.subject)
+        subject_key[m.uid] = key
         tid = None
         parent = None
         method = "root"
@@ -89,10 +94,13 @@ def build_threads(messages: list[Message]) -> ThreadResult:
                 tid = thread_of[parent]
                 method = "header"
                 break
+        # Some clients reused one In-Reply-To across unrelated replies, so a shared
+        # value joins siblings only when their subjects also agree.
         if tid is None and m.in_reply_to_hash and m.in_reply_to_hash in by_irt:
             sib = by_irt[m.in_reply_to_hash]
-            tid = thread_of[sib]
-            method = "sibling"
+            if subject_key[sib] == key or not key:
+                tid = thread_of[sib]
+                method = "sibling"
         if tid is None and key not in GENERIC and key in open_by_subject:
             cand = threads[open_by_subject[key]]
             gap = m.date - cand.last_seen

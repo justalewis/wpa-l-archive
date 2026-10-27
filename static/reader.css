@@ -95,6 +95,7 @@ svg g:hover .hit { fill: var(--terracotta-wash); }
 svg .grid { stroke: var(--rule); stroke-width: 1; }
 svg .base { stroke: var(--rule-strong); stroke-width: 1; }
 svg .axis, svg text { fill: var(--dilute); font: 11px var(--f-ui); }
+figure.timeline svg .axis { font-size: 17px; }
 
 table.data { border-collapse: collapse; font: var(--text-sm)/1.4 var(--f-ui); font-variant-numeric: tabular-nums; }
 table.data th, table.data td { padding: var(--space-1) var(--space-4) var(--space-1) 0; text-align: right; border-bottom: 1px solid var(--rule); }

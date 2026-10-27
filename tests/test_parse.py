@@ -119,6 +119,14 @@ def test_subject_fallback_threads_1993():
     assert tr.thread_of[placement.uid] != tr.thread_of[ethics.uid]
 
 
+def test_generic_subjects_do_not_join_without_headers():
+    a, b = load("era1993.txt")[2:4]
+    a.subject, b.subject = "Job Announcement", "Job Announcement"
+    b.is_reply = False
+    tr = build_threads([a, b])
+    assert tr.thread_of[a.uid] != tr.thread_of[b.uid]
+
+
 def test_uid_is_stable_and_salt_only_touches_poster_key():
     a = parse_file(str(FIX / "era1993.txt"), "x", b"one")
     b = parse_file(str(FIX / "era1993.txt"), "x", b"two")
@@ -162,6 +170,8 @@ def test_scrub_addresses(raw, expected):
     "data%3D02%257C01%257Cjo.doe%2540UNI.EDU%257C5",       # encoded twice
     "data-3D02-257C01-257CJo.Doe-2540UNI.EDU-257Cac",      # Proofpoint v2
     "x*7Cjo.doe*40uni.edu*7C",                              # URLDefense v3
+    '<a href="mailto:a@b.edu%22%20jo.doe@uni.edu%3c/a%3e">',  # glued to encoding
+    "Germantown, MD 20874jo.doe@bellatlantic.net",           # glued to text
 ])
 def test_scrub_wrapped_link_addresses(raw):
     out = scrub_addresses(raw)

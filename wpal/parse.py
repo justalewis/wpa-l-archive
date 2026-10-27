@@ -33,7 +33,9 @@ SEPARATOR = re.compile(rb"^={73}\r?\n(?=Date:)", re.M)
 # or dotted; percent-routed addresses (user%host@relay) match as one token.
 _DOMAIN = r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*"
 ADDRESS = re.compile(
-    r"(?:\"[^\"\n]{1,60}\"|(?<![\w.+%'-])[\w.+%'-]+)@+" + _DOMAIN
+    # No lookbehind on the plain form: an address glued to URL-encoding or to a
+    # neighbor ("%22%20jdoe@...") must still go, even if a few extra characters go too.
+    r"(?:\"[^\"\n]{1,60}\"|[\w.+%'-]+)@+" + _DOMAIN
     # Older mail systems wrote "user @ HOST" or "user @host.edu". The bare-host
     # form needs spaces on both sides so "@CCCC" handles and "@ ASU" survive.
     + r"|(?<![\w.+%'-])[\w.+%'-]+(?: @ [A-Z][A-Z0-9-]{3,}\b| ?@ ?[A-Za-z][\w-]*(?:\.[\w-]+)+)",
