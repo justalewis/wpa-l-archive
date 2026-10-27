@@ -21,6 +21,7 @@ import hmac
 import html
 import quopri
 import re
+import urllib.parse
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from email.header import decode_header, make_header
@@ -45,6 +46,18 @@ WRAPPED_ADDRESS = re.compile(
     r"[\w.+%'-]+@+" + _DOMAIN + r"\s*[>)\]]"
 )
 MAILTO = re.compile(r"mailto:\s*", re.I)
+SAFELINK = re.compile(r"https?://[\w.-]*safelinks\.protection\.outlook\.com/[^\s<>\"')\]]+", re.I)
+# Addresses encoded inside links: %40 (URL-encoding), %2540 (encoded twice),
+# -40 / -2540 (Proofpoint v2), *40 (URLDefense v3), often after a %7C separator.
+ENCODED_ADDRESS = re.compile(
+    r"(?:%7C)?[\w.+]+(?:%(?:25)*40|-(?:25)*40|\*(?:25)*40)[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+", re.I
+)
+# Spelled out to dodge harvesters: "jdoe at uni dot edu", "jdoe [at] uni [dot] edu".
+SPELLED_ADDRESS = re.compile(
+    r"(?<![\w.+-])[\w.+-]+\s+[\[(]?at[\])]?\s+[\w-]+(?:\s+[\[(]?dot[\])]?\s+[\w-]+)*"
+    r"\s+[\[(]?dot[\])]?\s+(?:edu|com|org|net|gov|us|ca|uk|au|info|bitnet)\b",
+    re.I,
+)
 ADDRESS_MARK = "[address removed]"
 
 REPLY_PREFIX = re.compile(
@@ -92,7 +105,17 @@ def split_blocks(raw: bytes) -> list[bytes]:
     return blocks
 
 
+def _unwrap_safelink(m: re.Match) -> str:
+    target = urllib.parse.parse_qs(urllib.parse.urlsplit(m.group(0)).query).get("url")
+    return target[0] if target else ""
+
+
 def scrub_addresses(text: str) -> str:
+    # Outlook rewrites every link into a safelinks URL whose data= parameter
+    # carries the recipient's address, so keep only the original target.
+    text = SAFELINK.sub(_unwrap_safelink, text)
+    text = ENCODED_ADDRESS.sub(ADDRESS_MARK, text)
+    text = SPELLED_ADDRESS.sub(ADDRESS_MARK, text)
     text = WRAPPED_ADDRESS.sub("", text)
     text = MAILTO.sub("", text)
     return ADDRESS.sub(ADDRESS_MARK, text)

@@ -146,6 +146,23 @@ def test_normalize_subject(raw, expected):
     ("follow @CCCC on twitter", "follow @CCCC on twitter"),
     ("meet @ 3pm", "meet @ 3pm"),
     ("I am @ ASU now", "I am @ ASU now"),
+    ("<https://nam04.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwpacouncil.org%2F&data=02%7C01%7Cjo.doe%40UNI.EDU%7Cabc&sdata=x&reserved=0>",
+     "<https://wpacouncil.org/>"),
+    ("data=02%7C01%7Cjo.doe%40UNI.EDU%7Cabc", "data=02%7C01" + ADDRESS_MARK + "%7Cabc"),
+    ("ages 20-40 and 1993-40s", "ages 20-40 and 1993-40s"),
+    ("write nick.c at gmail dot com", "write " + ADDRESS_MARK),
+    ("jdoe [at] eng [dot] uni\n[dot] edu.", ADDRESS_MARK + "."),
+    ("look at the site dot com bubble", "look at the site dot com bubble"),
 ])
 def test_scrub_addresses(raw, expected):
     assert scrub_addresses(raw) == expected
+
+
+@pytest.mark.parametrize("raw", [
+    "data%3D02%257C01%257Cjo.doe%2540UNI.EDU%257C5",       # encoded twice
+    "data-3D02-257C01-257CJo.Doe-2540UNI.EDU-257Cac",      # Proofpoint v2
+    "x*7Cjo.doe*40uni.edu*7C",                              # URLDefense v3
+])
+def test_scrub_wrapped_link_addresses(raw):
+    out = scrub_addresses(raw)
+    assert ADDRESS_MARK in out and "doe" not in out.lower()

@@ -72,6 +72,11 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
 """
 
 FILE_RE = re.compile(r"(\d{4})-(\d{2})\.txt$")
+LEAK = re.compile(
+    r"[\w.+-]{2,}(?:@|%(?:25)*40|-(?:25)*40|\*(?:25)*40|&#64;)[\w-]+\.(?:edu|com|org|net|gov|ca|uk|au|us|bitnet)\b"
+    r"|[\w.-]{2,}\s+(?:at|\(at\)|\[at\])\s+[\w-]+\s+(?:dot|\(dot\)|\[dot\])\s+(?:edu|com|org|net)\b",
+    re.I,
+)
 
 
 def load_salt(path: Path) -> bytes:
@@ -136,11 +141,18 @@ def main(argv=None):
                 if m._address and m.from_name:
                     names_by_addr[m._address][m.from_name] += 1
                 dated = m.date is not None
+                # Browse by the log's month unless the Date header is within a month
+                # of it; a sender's wrong clock otherwise files a 2006 post under 2003.
+                by, bm = y, mo
+                if dated and abs((m.date.year * 12 + m.date.month) - (y * 12 + mo)) <= 1:
+                    by, bm = m.date.year, m.date.month
+                elif dated:
+                    m.problems.append("date-outside-log")
                 rows.append((
                     m.uid,
                     m.date.isoformat() if dated else None,
-                    m.date.year if dated else y,
-                    m.date.month if dated else mo,
+                    by,
+                    bm,
                     int(dated),
                     m.date_raw,
                     m.from_name,
@@ -231,7 +243,16 @@ def coverage(db, per_file, recovered):
             if len(examples[p]) < 5:
                 examples[p].append(f"{src} {uid}")
     n_threads = db.execute("SELECT COUNT(*), SUM(n_messages > 1) FROM threads").fetchone()
+    # A second, looser net over what was stored. Hits are listed by id only.
+    leaks, leak_examples = 0, []
+    for uid, src, text in db.execute("SELECT uid, source_file, subject || ' ' || from_name || ' ' || body FROM messages"):
+        if LEAK.search(text):
+            leaks += 1
+            if len(leak_examples) < 20:
+                leak_examples.append(f"{src} {uid}")
     return {
+        "possible_addresses": leaks,
+        "possible_address_examples": leak_examples,
         "files": len(per_file),
         "empty_files": sorted(f for f, n in per_file.items() if n == 0),
         "years": years,
@@ -266,6 +287,10 @@ def write_report(r, path: Path):
     lines += ["", "## Problems flagged", "", "| Problem | Count | Examples (file, id) |", "|---|---:|---|"]
     for p, n in r["problems"].items():
         lines.append(f"| {p} | {n:,} | {'; '.join(r['problem_examples'][p])} |")
+    lines += ["", "## Leak audit", "",
+              f"Messages where a looser address pattern still matches after scrubbing: {r['possible_addresses']:,}."]
+    if r["possible_address_examples"]:
+        lines.append("First examples (file, id): " + "; ".join(r["possible_address_examples"]))
     if r["empty_files"]:
         lines += ["", "Files with no messages: " + ", ".join(r["empty_files"])]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
