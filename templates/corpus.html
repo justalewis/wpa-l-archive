@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic, who with context %}
+{% block title %}{{ c.name }} · Corpus · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('data_page') }}">{{ ic('ic-data', 'ic-sm ic-quiet') }} Data</a> / Saved corpus</p>
+<div class="page-head">
+  <h1>{{ c.name }}</h1>
+  <span class="result-count">{{ "{:,}".format(n_visible) }} messages</span>
+  {% if c.description %}<p class="lede">{{ c.description }}</p>{% endif %}
+</div>
+<table class="data">
+  <tbody>
+    <tr><th scope="row">Query</th><td class="l">{% for k, v in query.items() %}<code>{{ k }}={{ v }}</code> {% endfor %}</td></tr>
+    <tr><th scope="row">Saved</th><td class="l">{{ c.created_at }} UTC, from build <code>{{ c.build_id }}</code> (current build <code>{{ build }}</code>)</td></tr>
+    <tr><th scope="row">Snapshot</th><td class="l">{{ "{:,}".format(c.n) }} message ids, frozen when saved{% if withdrawn %}; {{ withdrawn }} since withdrawn at posters' request and not shown{% endif %}</td></tr>
+    <tr><th scope="row">Cite as</th><td class="l"><span id="corpus-cite">“{{ c.name }}.” Saved corpus, WPA-L Archive Reader, {{ c.created_at[:10] }}. {{ url_for('corpus_view', cid=c.id, _external=True) }}</span> <button class="copy-btn" type="button" data-copy="#corpus-cite" hidden>Copy</button></td></tr>
+  </tbody>
+</table>
+<p class="meta">
+  {{ ic('ic-data', 'ic-sm ic-quiet') }} Export: <a href="{{ url_for('export', corpus=c.id, format='csv') }}">CSV</a> ·
+  <a href="{{ url_for('export', corpus=c.id, format='jsonl') }}">JSONL</a> ·
+  pseudonymized <a href="{{ url_for('export', corpus=c.id, format='csv', pseudo=1) }}">CSV</a> /
+  <a href="{{ url_for('export', corpus=c.id, format='jsonl', pseudo=1) }}">JSONL</a> ·
+  <a href="{{ url_for('api_corpus', cid=c.id) }}">API</a> ·
+  <a href="{{ url_for('search') }}?{{ query|urlencode }}">Run the query again on the current build</a>
+</p>
+<ol class="entries">
+{% for r in rows %}
+  <li class="entry">
+    <div class="entry-meta"><span class="entry-date">{{ r.sent_at|when("%d %b %Y") }}</span><span>{{ who(r.from_name, r.person_id) }}</span></div>
+    <div class="entry-title-row"><a class="entry-title" href="{{ url_for('message', uid=r.uid) }}">{{ r.subject or "(no subject)" }}</a></div>
+  </li>
+{% endfor %}
+</ol>
+{% if page > 1 or more %}
+<nav class="pagination" aria-label="Pagination">
+  {% if page > 1 %}<a class="btn-quiet" href="?page={{ page-1 }}">&larr; Earlier</a>{% else %}<span></span>{% endif %}
+  <span class="page-info">Page {{ page }}</span>
+  {% if more %}<a class="btn-quiet" href="?page={{ page+1 }}">Later &rarr;</a>{% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

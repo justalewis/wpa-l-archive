@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}Ethics · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Ethics</h1>
+  <p class="placeholder">[Draft placeholder. A working statement of the rules the code enforces; public wording to come.]</p>
+  <p class="lede">WPA-L was a semi-public professional space, and most of its posters are living colleagues. These are the rules the reader follows.</p>
+</div>
+
+<h2 class="section-head">What is shown</h2>
+<ul>
+  <li>Messages as posted, with every email address removed, and names as posted.</li>
+  <li>A person page only for someone with at least {{ person_min }} messages.</li>
+  <li>A pair of people (in person pages and network views) only when they exchanged at least {{ edge_min }} replies.</li>
+  <li>Descriptions of activity, never of character. Charts of busy threads say how busy they were, not who was at fault.</li>
+  <li>The site asks search engines not to index any page, including the API, so the archive serves readers rather than name searches.</li>
+</ul>
+
+<h2 class="section-head">{{ ic('ic-optout', 'ic-sm ic-quiet') }} What withdrawal does</h2>
+<ul>
+  <li>A withdrawn person's messages disappear from browsing, threads, search, permalinks, exports, saved corpora and the API. Their person page is gone, and they appear in no network, citation or institution listing by name.</li>
+  <li>Withdrawing one address or one spelling of a name withdraws the whole person: every address and spelling grouped with it.</li>
+  <li>Their messages still count, anonymously, in totals: monthly volume, the denominators that normalize term trends, and genre shares. Removing them there would quietly change the shape of the record without revealing anything about them.</li>
+  <li>Their words quoted in other people's replies remain, for now. How to handle those is an open question.</li>
+  <li>Nothing changes on the Internet Archive, which holds the original deposit.</li>
+</ul>
+<p><a href="{{ url_for('opt_out') }}">Ask to have your messages withdrawn</a>.</p>
+
+<h2 class="section-head">Exports</h2>
+<p>Exports require agreeing to terms of use. A pseudonymized export replaces names and person ids with stable pseudonyms, for work under IRB review; names inside message text remain and must be handled by the researcher.</p>
+
+<h2 class="section-head">{{ ic('ic-redpen', 'ic-sm ic-quiet') }} Corrections</h2>
+<p>Wrongly grouped people, broken threads and bad matches can be reported. Corrections are recorded as decision files in the build, so they survive every rebuild.</p>
+{% endblock %}
