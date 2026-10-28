@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}Events · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Events</h1>
+  <p class="lede">The field's calendar, for reading the list's rhythms against it. Turn the overlay on from the <a href="{{ url_for('timeline', events=1) }}">timeline</a> or <a href="{{ url_for('trends', terms='assessment', events=1) }}">trends</a>.</p>
+</div>
+
+<h2 class="section-head">The year's rhythm</h2>
+{% set peak = season.values()|max %}
+<figure class="viz chart hist">
+  <figcaption class="meta">Average share of a year's messages posted in each month, 1993–2020</figcaption>
+  <svg viewBox="0 0 406 76" role="img" aria-label="Bar chart: average share of a year's messages by month">
+  {% for m in range(1, 13) %}{% set v = season[m] %}{% set h = (v / peak * 54)|round(1) %}
+    <g data-tip-title="{{ MONTHS[m] }}" data-tip="{{ '%.1f'|format(v * 100) }}% of a year's messages">
+    <rect class="hit" x="{{ (m - 1) * 33.8 }}" y="0" width="33.8" height="58"></rect>
+    <rect class="bar" x="{{ (m - 1) * 33.8 + 4 }}" y="{{ 58 - h }}" width="26" height="{{ h }}" rx="2"></rect>
+    <text x="{{ (m - 1) * 33.8 + 17 }}" y="72" text-anchor="middle">{{ MONTHS[m][:3] }}</text></g>
+  {% endfor %}
+    <line class="base" x1="0" x2="406" y1="58" y2="58"></line>
+  </svg>
+</figure>
+
+{% if around %}
+{% set peak2 = around.values()|max %}
+<figure class="viz chart hist">
+  <figcaption class="meta">Messages in the months around each CCCC convention, relative to that year's monthly average (1.0 = an ordinary month)</figcaption>
+  <svg viewBox="0 0 406 76" role="img" aria-label="Bar chart: volume in the months before and after CCCC">
+  {% for k, v in around.items() %}{% set i = loop.index0 %}{% set h = (v / peak2 * 54)|round(1) %}
+    <g data-tip-title="{{ 'CCCC month' if k == 0 else ('%+d'|format(k) ~ ' months') }}" data-tip="{{ '%.2f'|format(v) }} × an average month">
+    <rect class="hit" x="{{ i * 45 }}" y="0" width="45" height="58"></rect>
+    <rect class="{{ 'bar' if k != 0 else 'bar bar-key' }}" x="{{ i * 45 + 6 }}" y="{{ 58 - h }}" width="33" height="{{ h }}" rx="2"></rect>
+    <text x="{{ i * 45 + 22 }}" y="72" text-anchor="middle">{{ 'CCCC' if k == 0 else '%+d'|format(k) }}</text></g>
+  {% endfor %}
+    <line class="base" x1="0" x2="406" y1="58" y2="58"></line>
+  </svg>
+</figure>
+{% endif %}
+
+<h2 class="section-head">{{ ic('ic-event', 'ic-sm ic-quiet') }} Calendar</h2>
+<table class="data">
+  <thead><tr><th scope="col">Date</th><th scope="col" class="l">Event</th><th scope="col" class="l">Kind</th><th scope="col" class="l">Source</th></tr></thead>
+  <tbody>{% for e in evs %}<tr><td class="l">{{ e.date }}</td><td class="l">{{ e.label }}</td><td class="l">{{ EVENT_CATEGORIES.get(e.category, e.category) }}</td>
+    <td class="l">{% if e.source %}<a href="{{ e.source }}">{{ "list messages" if e.source.startswith('/') else "source" }}</a>{% endif %}</td></tr>{% endfor %}</tbody>
+</table>
+<details class="methodology-section">
+  <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} How the calendar is kept</summary>
+  <div class="methodology-body"><p>Events live in a plain file in the build (<code>decisions/events.yaml</code>); adding one is a one-line change and a rebuild. Each CCCC convention's host city was checked against the list's own messages that year, and its source links to that search. Months are approximate unless a day is given.</p></div>
+</details>
+{% endblock %}
