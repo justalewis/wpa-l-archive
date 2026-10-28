@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import yaml
-
 CATEGORIES = {"cccc": "CCCC convention", "cwpa": "CWPA", "statement": "Position statement",
               "news": "News and policy", "list": "List administration"}
 
@@ -11,6 +9,8 @@ CATEGORIES = {"cccc": "CCCC convention", "cwpa": "CWPA", "statement": "Position 
 def load(path) -> list[dict]:
     if not path.exists():
         return []
+    import yaml  # build-time only; the web app never reads the YAML
+
     rows = yaml.safe_load(path.read_text(encoding="utf-8")) or []
     out = []
     for r in rows:

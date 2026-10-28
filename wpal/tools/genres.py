@@ -36,7 +36,7 @@ def register(app) -> None:
         if not has_genre():
             abort(404)
         rows = app.cached("genre_year", lambda: [dict(r) for r in app.con().execute(
-            "SELECT year, genre, COUNT(*) n FROM main.messages GROUP BY year, genre ORDER BY year")])
+            "SELECT year, genre, n FROM genre_year ORDER BY year")])
         years = {}
         for r in rows:
             years.setdefault(r["year"], {g: 0 for g in ORDER})[r["genre"] or "other"] += r["n"]
@@ -44,9 +44,7 @@ def register(app) -> None:
         shares = {y: {g: (v[g] / totals[y] if totals[y] else 0) for g in ORDER} for y, v in years.items()}
         evals = app.con().execute("SELECT * FROM genre_eval ORDER BY support DESC").fetchall()
         sources = app.cached("genre_sources", lambda: [dict(r) for r in app.con().execute(
-            "SELECT CASE WHEN genre_source LIKE 'rule%' THEN 'rules' WHEN genre_source LIKE 'model%' THEN 'model' "
-            "WHEN genre_source LIKE 'hand%' THEN 'hand' WHEN genre_source = 'structure' THEN 'thread structure' "
-            "ELSE 'default' END src, COUNT(*) n FROM main.messages GROUP BY src ORDER BY n DESC")])
+            "SELECT src, n FROM genre_source_counts ORDER BY n DESC")])
         return render_template("genres.html", years=years, shares=shares, totals=totals, evals=evals, sources=sources,
                                active_nav="genres", **_extras(app, "genres"))
 

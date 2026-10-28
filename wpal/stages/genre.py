@@ -155,6 +155,17 @@ def run(db, ctx) -> None:
     db.executemany("UPDATE messages SET genre = ?, genre_source = ? WHERE uid = ?",
                    [(g, s, u) for u, (g, s) in out.items()])
     db.execute("CREATE INDEX IF NOT EXISTS messages_genre ON messages(genre, year)")
+    # Totals for /genres, so the page never scans every message.
+    db.executescript("""
+        DROP TABLE IF EXISTS genre_year;
+        CREATE TABLE genre_year AS SELECT year, genre, COUNT(*) n FROM messages GROUP BY year, genre;
+        DROP TABLE IF EXISTS genre_source_counts;
+        CREATE TABLE genre_source_counts AS
+            SELECT CASE WHEN genre_source LIKE 'rule%' THEN 'rules' WHEN genre_source LIKE 'model%' THEN 'model'
+                        WHEN genre_source LIKE 'hand%' THEN 'hand' WHEN genre_source = 'structure' THEN 'thread structure'
+                        ELSE 'default' END src, COUNT(*) n
+            FROM messages GROUP BY src ORDER BY n DESC;
+    """)
     _evaluate(db, predicted, hand)
     _jobs(db, has_fresh)
     dist = collections.Counter(g for g, _ in out.values())

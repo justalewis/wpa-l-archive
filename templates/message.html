@@ -20,6 +20,9 @@
     {% if replies %}<span>Replies: {% for r in replies %}<a href="{{ url_for('message', uid=r.uid) }}">{{ r.from_name }}</a>{{ ", " if not loop.last }}{% endfor %}</span>{% endif %}
   </div>
 </article>
+{% if linked_works %}
+<p class="meta">{{ ic('ic-citation', 'ic-sm ic-quiet') }} Works named here: {% for w in linked_works %}<a href="{{ url_for('cited_work', wid=w.work_id) }}">{{ w.title }}</a>{% if w.year %} ({{ w.year }}){% endif %}{{ "; " if not loop.last }}{% endfor %}</p>
+{% endif %}
 {% block message_extra %}{% endblock %}
 <section class="cite-box">
   <h2>{{ ic('ic-citation', 'ic-sm ic-quiet') }} Cite this message</h2>

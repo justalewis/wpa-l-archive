@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}Topics · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Topics</h1>
+  <p class="lede">What the list talked about, found by a topic model rather than chosen in advance: {{ rows|length }} topics across {{ "{:,}".format(run.n_docs) }} threads, each with its share of the year's threads. Labels marked “auto” are the model's top words, not yet named by a person.</p>
+</div>
+<div class="sift"><div class="sift-row"><span class="sift-label">Sort</span>
+  {% for k, l in [("size", "Largest"), ("peak", "When it peaked"), ("label", "Label")] %}{% if sort == k %}<b>{{ l }}</b>{% else %}<a href="?sort={{ k }}">{{ l }}</a>{% endif %} {% endfor %}
+</div></div>
+<div class="topic-grid">
+{% for r in rows %}{% set s = series[r.topic_key] %}
+  <a class="topic-cell" href="{{ url_for('topic', key=r.topic_key) }}">
+    <b>{{ r.label }}</b>{% if r.labeled_by == "auto" %} <span class="meta">(auto)</span>{% endif %}
+    <svg class="chart" viewBox="0 0 290 40" role="img" aria-label="Share of threads by year, {{ r.label }}">
+      <polyline class="series s1" points="{% for y in range(1993, 2022) %}{{ (y - 1993) * 10 + 2 }},{{ 38 - (s.get(y, 0) / peak) * 34 }} {% endfor %}"></polyline>
+    </svg>
+    <span class="meta">{{ "{:,}".format(r.n_threads) }} threads · peak {{ r.peak_year }}</span>
+  </a>
+{% endfor %}
+</div>
+<p class="viz-note">All panels share one scale: the tallest point is {{ '%.1f'|format(peak * 100) }}% of a year's threads. 1993 at left, 2021 at right.</p>
+<details class="methodology-section">
+  <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} Model and reproducibility</summary>
+  <div class="methodology-body">
+    <p>Each thread is one document: its subject and its messages' own words, with quoted text and signatures removed. Documents are embedded with <code>{{ run.config.embedding_model }}</code>, reduced with UMAP and clustered with HDBSCAN (BERTopic), then merged to at most {{ run.config.reduce_to }} topics. {{ "{:,}".format(run.outliers) }} threads fit no topic and are left out. Topic words come from class-based TF-IDF.</p>
+    <p>Run of {{ run.built_at }}, seed {{ run.seed }}, config version {{ run.config.version }}; {% for k, v in run.versions.items() %}{{ k }} {{ v }}{{ ", " if not loop.last }}{% endfor %}. The configuration is a file in the build (<code>decisions/topics.toml</code>) and the embeddings are cached, so the same documents and config give the same model.</p>
+  </div>
+</details>
+{% endblock %}
