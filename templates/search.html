@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Search</h1>
-  {% if q or who_q %}<span class="result-count">{{ "{:,}".format(n) }} message{{ "s" if n != 1 }}</span>{% endif %}
+  {% if not filters.empty %}<span class="result-count">{{ "{:,}".format(n) }} message{{ "s" if n != 1 }}</span>{% endif %}
 </div>
 
 <div class="sift">
@@ -22,6 +22,8 @@
       <select name="end" aria-label="To year"><option value="">To&hellip;</option>{% for y in range(1993, 2022) %}<option value="{{ y }}" {% if end == y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select>
       <label class="sift-label"><input type="checkbox" name="fresh" value="1" {{ "checked" if filters.fresh }}> own words only</label>
       {% if filters.month %}<input type="hidden" name="month" value="{{ filters.month }}"><span class="sift-label">{{ MONTHS[filters.month] }} only</span>{% endif %}
+      {% if has_genre %}<span class="sift-label">Genre</span>
+      <select name="genre" aria-label="Genre"><option value="">Any</option>{% for g in GENRE_ORDER %}<option value="{{ g }}" {% if filters.genre == g %}selected{% endif %}>{{ GENRE_NAMES[g] }}</option>{% endfor %}</select>{% endif %}
       {% block search_filters %}{% endblock %}
     </div>
   </form>
@@ -29,7 +31,7 @@
 
 {% if error %}<p class="err">{{ error }}</p>{% endif %}
 
-{% if q or who_q %}
+{% if not filters.empty %}
 {% if n and 'corpus_create' in url_rules %}
 <details class="methodology-section">
   <summary class="methodology-summary">{{ ic('ic-data', 'ic-sm ic-quiet') }} Save or export these {{ "{:,}".format(n) }} messages</summary>

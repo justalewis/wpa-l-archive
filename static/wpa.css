@@ -1218,3 +1218,13 @@ table.data thead th { color: var(--dilute); font-weight: 600; }
 .trends-chart text { font-size: 16px; }
 .confidence.conf-low .ic { --ic-accent: var(--terracotta); }
 .confidence.conf-medium .ic { color: var(--dilute); }
+
+/* Stacked shares (genres): fills in the categorical order, separated by a
+   hairline in the surface colour so adjacent segments never touch. */
+.chart .seg { stroke: var(--chart-surface); stroke-width: 1; }
+.chart .g-1 { fill: var(--cat-1); } .chart .g-2 { fill: var(--cat-2); } .chart .g-3 { fill: var(--cat-3); }
+.chart .g-4 { fill: var(--cat-4); } .chart .g-5 { fill: var(--cat-5); } .chart .g-6 { fill: var(--cat-6); }
+.chart .g-7 { fill: var(--cat-7); } .chart .g-8 { fill: var(--cat-8); } .chart .g-9 { fill: var(--cat-other); }
+.chart a:hover .seg { opacity: 0.8; }
+.genre-chart text { font-size: 14px; }
+.genre-mark { font: 600 var(--text-xs)/1.4 var(--f-ui); color: var(--dilute); text-transform: uppercase; letter-spacing: 0.05em; }

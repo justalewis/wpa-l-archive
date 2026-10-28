@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}Genres · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Genres</h1>
+  <p class="lede">What kind of message the list carried, year by year: the drift from discussion toward announcements, calls and job ads. Shares of each year's messages.</p>
+</div>
+<p class="meta">{{ ic('ic-job', 'ic-sm ic-quiet') }} <a href="{{ url_for('jobs') }}">Job ads by year and kind</a></p>
+
+{% set W = 1000 %}{% set X0 = 40 %}{% set BW = ((W - X0 - 10) / 29)|round(1) %}{% set H = 260 %}{% set TOP = 10 %}
+<figure class="viz chart genre-chart">
+  <svg viewBox="0 0 {{ W }} {{ H + 40 }}" role="img" aria-label="Stacked bars: share of each genre per year, 1993 to 2021">
+    {% for frac in [0.25, 0.5, 0.75, 1.0] %}{% set gy = TOP + H - frac * H %}
+      <line class="grid" x1="{{ X0 }}" x2="{{ W - 10 }}" y1="{{ gy }}" y2="{{ gy }}"></line>
+      <text x="{{ X0 - 6 }}" y="{{ gy + 4 }}" text-anchor="end">{{ (frac * 100)|int }}%</text>
+    {% endfor %}
+    {% for y, sh in shares.items() %}{% set x = X0 + (y - 1993) * BW %}{% set ns = namespace(acc=0) %}
+      {% for g in GENRE_ORDER %}{% set h = sh[g] * H %}
+        {% if h > 0 %}
+        <a href="{{ url_for('search', genre=g, start=y, end=y) }}"><rect class="seg g-{{ loop.index if loop.index <= 8 else 9 }}" x="{{ x + 1 }}" y="{{ (TOP + H - ns.acc - h)|round(1) }}" width="{{ BW - 2 }}" height="{{ (h - 1 if h > 2 else h)|round(1) }}"
+          data-tip-title="{{ GENRE_NAMES[g] }} · {{ y }}" data-tip="{{ '%.1f'|format(sh[g] * 100) }}% ({{ '{:,}'.format(years[y][g]) }} of {{ '{:,}'.format(totals[y]) }} messages)"></rect></a>
+        {% endif %}
+        {% set ns.acc = ns.acc + h %}
+      {% endfor %}
+    {% endfor %}
+    <line class="base" x1="{{ X0 }}" x2="{{ W - 10 }}" y1="{{ TOP + H }}" y2="{{ TOP + H }}"></line>
+    {% for y in range(1993, 2022, 4) %}<text x="{{ X0 + (y - 1993) * BW + BW / 2 }}" y="{{ TOP + H + 18 }}" text-anchor="middle">{{ y }}</text>{% endfor %}
+  </svg>
+  <div class="viz-legend">{% for g in GENRE_ORDER %}<span class="key"><span class="swatch sw-{{ 'cat-' ~ loop.index if loop.index <= 8 else 'cat-other' }}"></span>{{ GENRE_NAMES[g] }}</span>{% endfor %}</div>
+  <p class="viz-note">Each bar is one year's messages. Select a segment to open those messages. Counts include withdrawn posters' messages, anonymously.</p>
+</figure>
+
+<table class="data">
+  <caption class="vh">Share of messages by genre and year</caption>
+  <thead><tr><th scope="col">Year</th>{% for g in GENRE_ORDER %}<th scope="col">{{ GENRE_NAMES[g] }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for y, sh in shares.items() %}<tr><th scope="row">{{ y }}</th>{% for g in GENRE_ORDER %}<td>{{ '%.0f'|format(sh[g] * 100) }}%</td>{% endfor %}</tr>{% endfor %}</tbody>
+</table>
+
+<details class="methodology-section" open>
+  <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} Methodology and evaluation</summary>
+  <div class="methodology-body">
+    <p>Replies are <b>discussion</b>, or <b>debate</b> when they fall in a thread of 30 or more messages from 15 or more people within two weeks. That is a structural definition, not a judgment of tone. Rules on the subject and opening words place calls for papers, job ads, announcements, tributes, list business, queries, and starters that comment on earlier posts. A logistic-regression model trained on the rule labels places the remaining thread starters when it is at least 55% sure; the rest are <b>other</b>.</p>
+    <p>How each message got its label:
+      {% for s in sources %}{{ s.src }} {{ "{:,}".format(s.n) }}{{ ", " if not loop.last }}{% endfor %}.</p>
+    {% if evals %}
+    <p><b>Evaluation.</b> A stratified sample of {{ evals|sum(attribute='support') }} messages (mostly thread starters, across three eras) was coded by hand and held out from training. The coder was {{ evals[0].coder }}. The rules were revised once after a first look at these results, so the figures below are somewhat optimistic; a fresh sample coded by a person would give a fairer measure.</p>
+    <table class="data">
+      <thead><tr><th scope="col">Genre</th><th scope="col">Precision</th><th scope="col">Recall</th><th scope="col">Hand-coded</th><th scope="col">Predicted</th></tr></thead>
+      <tbody>{% for e in evals %}<tr><td class="l">{{ GENRE_NAMES.get(e.label, e.label) }}</td>
+        <td>{{ '%.2f'|format(e.precision) if e.precision is not none else '–' }}</td><td>{{ '%.2f'|format(e.recall) if e.recall is not none else '–' }}</td>
+        <td>{{ e.support }}</td><td>{{ e.predicted }}</td></tr>{% endfor %}</tbody>
+    </table>
+    {% endif %}
+  </div>
+</details>
+{% endblock %}

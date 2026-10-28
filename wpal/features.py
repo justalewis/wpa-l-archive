@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import importlib
 
-TOOLS: list[str] = ["people", "data", "trends", "confidence"]
+TOOLS: list[str] = ["people", "data", "trends", "confidence", "genres"]
 
 
 def register(app) -> None:
