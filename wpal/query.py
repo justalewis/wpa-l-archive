@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-FILTER_KEYS = ("q", "from", "start", "end", "genre", "fresh")
+FILTER_KEYS = ("q", "from", "start", "end", "month", "genre", "fresh")
 
 
 @dataclass
@@ -20,6 +20,7 @@ class Filters:
     who: str = ""
     start: int | None = None
     end: int | None = None
+    month: int | None = None  # applies within start..end; used by chart click-throughs
     genre: str = ""
     fresh: bool = False  # search only the poster's own words, not quoted text
 
@@ -37,13 +38,15 @@ class Filters:
             who=(args.get("from") or "").strip()[:80],
             start=year(args.get("start")),
             end=year(args.get("end")),
+            month=(lambda v: v if v and 1 <= v <= 12 else None)(
+                int(args.get("month")) if str(args.get("month") or "").isdigit() else None),
             genre=(args.get("genre") or "").strip()[:30],
             fresh=(args.get("fresh") or "") in ("1", "true", "on"),
         )
 
     def as_dict(self) -> dict:
         d = {"q": self.q, "from": self.who, "start": self.start, "end": self.end,
-             "genre": self.genre, "fresh": "1" if self.fresh else ""}
+             "month": self.month, "genre": self.genre, "fresh": "1" if self.fresh else ""}
         return {k: v for k, v in d.items() if v not in ("", None)}
 
     @property
@@ -70,6 +73,9 @@ def where(f: Filters, alias: str = "v") -> tuple[str, list]:
     if f.end:
         w.append(f"{alias}.year <= ?")
         p.append(f.end)
+    if f.month:
+        w.append(f"{alias}.month = ?")
+        p.append(f.month)
     if f.genre:
         w.append(f"{alias}.genre = ?")
         p.append(f.genre)

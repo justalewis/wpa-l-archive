@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}Trends · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Term trends</h1>
+  <p class="lede">How much of the list's talk mentioned a term, year by year or month by month. Rates are per 1,000 messages (or per 10,000 words), because the list's volume rose and fell about tenfold; raw counts mostly track how busy it was.</p>
+</div>
+
+<form class="viz-controls" method="get">
+  <label for="terms">Terms, comma-separated (up to {{ max_terms }})</label>
+  <input type="text" id="terms" name="terms" value="{{ raw_terms }}" size="40" placeholder="assessment, outcomes, portfolio">
+  <label for="unit">By</label>
+  <select id="unit" name="unit"><option value="year" {{ "selected" if unit == "year" }}>year</option><option value="month" {{ "selected" if unit == "month" }}>month</option></select>
+  <label for="count">Count</label>
+  <select id="count" name="count"><option value="messages" {{ "selected" if mode == "messages" }}>messages containing</option><option value="occurrences" {{ "selected" if mode == "occurrences" }}>occurrences</option></select>
+  <label for="measure">As</label>
+  <select id="measure" name="measure"><option value="rate" {{ "selected" if measure == "rate" }}>rate</option><option value="raw" {{ "selected" if measure == "raw" }}>raw count</option></select>
+  <label for="smooth">Smoothing</label>
+  <select id="smooth" name="smooth"><option value="0">none</option><option value="3" {{ "selected" if smooth == "3" }}>3 months</option><option value="12" {{ "selected" if smooth == "12" }}>12 months</option></select>
+  <label><input type="checkbox" name="fresh" value="1" {{ "checked" if fresh }}> own words only (no quoted text)</label>
+  <button class="btn" type="submit">Draw</button>
+</form>
+
+{% for n in notes %}<p class="viz-note">{{ n }}</p>{% endfor %}
+{% if not has_denominators %}<div class="viz-empty">{{ ic('ic-trends', 'ic-absent') }} This build has no monthly totals yet; rebuild with the trends stage.</div>{% endif %}
+
+{% if chart %}
+{% set ylabel = ("messages per 1,000" if mode == "messages" else "occurrences per 10,000 words") if measure == "rate" else ("messages" if mode == "messages" else "occurrences") %}
+<figure class="viz chart trends-chart">
+  <div class="viz-stats">{% for s in series %}<span>{{ s.term }}: {{ "{:,}".format(s.total) }} {{ "messages" if mode == "messages" else "occurrences" }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  <svg viewBox="0 0 {{ chart.W }} {{ chart.H }}" role="img" aria-label="Line chart of {{ ylabel }} for {{ terms|join(', ') }}">
+    {% for ty, tv in chart.ticks %}
+      <line class="grid" x1="{{ chart.X0 }}" x2="{{ chart.W - 10 }}" y1="{{ ty }}" y2="{{ ty }}"></line>
+      <text x="{{ chart.X0 - 6 }}" y="{{ ty + 4 }}" text-anchor="end">{{ "%.1f"|format(tv) if measure == "rate" else "{:,}".format(tv|int) }}</text>
+    {% endfor %}
+    <line class="base" x1="{{ chart.X0 }}" x2="{{ chart.W - 10 }}" y1="{{ chart.Y0 }}" y2="{{ chart.Y0 }}"></line>
+    {% for x, yr in chart.years %}<text x="{{ x }}" y="{{ chart.Y0 + 18 }}" text-anchor="middle">{{ yr }}</text>{% endfor %}
+    {% block chart_underlay %}{% if event_marks %}{% for ev in event_marks %}<line class="event-line ev-{{ ev.category }}" x1="{{ ev.x }}" x2="{{ ev.x }}" y1="16" y2="{{ chart.Y0 }}" data-tip-title="{{ ev.label }}" data-tip="{{ ev.when }}"></line>{% endfor %}{% endif %}{% endblock %}
+    {% for s in series %}
+      <polyline class="series s{{ s.slot }}" points="{{ s.path }}"></polyline>
+      {% for px, py, v, ym in s.points %}
+        <a href="{{ point_url(s.term, ym[0], ym[1]) }}" aria-label="{{ s.term }}, {{ ym[0] }}{% if ym[1] %}-{{ '%02d'|format(ym[1]) }}{% endif %}">
+          <circle class="pt s{{ s.slot }}{{ ' dense' if chart.dense }}" cx="{{ px }}" cy="{{ py }}" r="4"
+            data-tip-title="{{ s.term }} · {% if ym[1] %}{{ MONTHS[ym[1]][:3] }} {% endif %}{{ ym[0] }}"
+            data-tip="{{ ('%.2f'|format(v)) if measure == 'rate' else '{:,}'.format(v|int) }} {{ ylabel }}"></circle></a>
+      {% endfor %}
+    {% endfor %}
+  </svg>
+  <div class="viz-legend">
+    {% for s in series %}<span class="key"><span class="swatch sw-cat-{{ s.slot }}"></span>{{ s.term }}</span>{% endfor %}
+    {% block legend_extra %}{% if event_marks %}<span class="key"><span class="swatch sw-event"></span>events</span>{% endif %}{% endblock %}
+  </div>
+  <p class="viz-note">Y axis: {{ ylabel }}. Select a point to open the matching messages for that {{ unit }}. {% if smooth != "0" and unit == "month" %}Each point is the average of the {{ smooth }} months ending there.{% endif %}</p>
+</figure>
+{% block trends_after %}{% endblock %}
+<table class="data">
+  <caption class="vh">Values behind the chart</caption>
+  <thead><tr><th scope="col">{{ unit|capitalize }}</th>{% for s in series %}<th scope="col">{{ s.term }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% if unit == "year" %}
+    {% for i in range(series[0].vals|length) %}<tr><th scope="row">{{ series[0].points[i][3][0] }}</th>{% for s in series %}<td>{{ ('%.2f'|format(s.vals[i])) if measure == 'rate' else '{:,}'.format(s.vals[i]|int) }}</td>{% endfor %}</tr>{% endfor %}
+  {% endif %}
+  </tbody>
+</table>
+{% if unit == "month" %}<p class="meta">Switch to “by year” for the table of values.</p>{% endif %}
+{% elif terms == [] %}
+<div class="viz-empty">{{ ic('ic-trends', 'ic-absent') }} Enter one or more terms to draw their trajectories. Try <a href="{{ url_for('trends', terms='assessment, outcomes, portfolio') }}">assessment, outcomes, portfolio</a> or <a href="{{ url_for('trends', terms='adjunct, contingent, labor', unit='month', smooth='12') }}">adjunct, contingent, labor</a>.</div>
+{% endif %}
+
+<details class="methodology-section">
+  <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} Methodology</summary>
+  <div class="methodology-body">
+    <p><b>Messages containing</b> counts messages whose subject or body matches the term in the search index, which stems words (“assess” also finds “assessment”). <b>Occurrences</b> counts the word or phrase itself, allowing up to three trailing letters for plurals and inflections. Rates divide by every message (or every word) posted that month or year, including the messages of posters who have withdrawn, since a total names no one.</p>
+    <p><b>Own words only</b> searches each message with its quoted text and signature removed. Without it, a term in one message is counted again in every reply that quotes it, which inflates terms that start long threads. The quoted-text split is heuristic; see the Data page.</p>
+  </div>
+</details>
+{% endblock %}

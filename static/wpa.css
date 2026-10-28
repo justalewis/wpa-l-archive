@@ -1189,3 +1189,30 @@ table.data thead th { color: var(--dilute); font-weight: 600; }
 .sw-cat-other { background: var(--cat-other); }
 .vol-grid tbody th a { color: var(--gloss); text-decoration-color: var(--rule-strong); }
 .vol-grid tbody th a:hover { color: var(--terracotta); }
+
+/* -- Line charts (trends, topics) -------------------------------
+   Thin 2px lines in the categorical order; markers at least 8px across,
+   ringed in the surface colour where they overlap. On a dense monthly axis
+   the markers wait for hover so the lines stay legible. */
+.chart .series { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .pt { stroke: var(--chart-surface); stroke-width: 2; }
+.chart .pt.dense { opacity: 0; }
+.chart a:hover .pt, .chart a:focus .pt { opacity: 1; }
+.chart .s1 { stroke: var(--cat-1); } .chart .pt.s1 { fill: var(--cat-1); stroke: var(--chart-surface); }
+.chart .s2 { stroke: var(--cat-2); } .chart .pt.s2 { fill: var(--cat-2); stroke: var(--chart-surface); }
+.chart .s3 { stroke: var(--cat-3); } .chart .pt.s3 { fill: var(--cat-3); stroke: var(--chart-surface); }
+.chart .s4 { stroke: var(--cat-4); } .chart .pt.s4 { fill: var(--cat-4); stroke: var(--chart-surface); }
+.chart .s5 { stroke: var(--cat-5); } .chart .pt.s5 { fill: var(--cat-5); stroke: var(--chart-surface); }
+.chart .s6 { stroke: var(--cat-6); } .chart .pt.s6 { fill: var(--cat-6); stroke: var(--chart-surface); }
+.chart .s7 { stroke: var(--cat-7); } .chart .pt.s7 { fill: var(--cat-7); stroke: var(--chart-surface); }
+.chart .s8 { stroke: var(--cat-8); } .chart .pt.s8 { fill: var(--cat-8); stroke: var(--chart-surface); }
+.chart .s9 { stroke: var(--cat-other); } .chart .pt.s9 { fill: var(--cat-other); stroke: var(--chart-surface); }
+.chart .trends-chart svg, .trends-chart svg { width: 100%; }
+.chart text { font-size: 12px; }
+.chart.timeline text { font-size: 17px; }
+.chart.hist text { font-size: 11px; }
+.sw-event { background: var(--faience); }
+.chart .event-line { stroke: var(--faience); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.chart .event-line:hover { stroke-width: 3; }
+.toggle-row { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute); display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.trends-chart text { font-size: 16px; }

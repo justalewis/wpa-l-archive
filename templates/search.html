@@ -20,6 +20,8 @@
       <select name="start" aria-label="From year"><option value="">From&hellip;</option>{% for y in range(1993, 2022) %}<option value="{{ y }}" {% if start == y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select>
       <span class="sift-dash">&ndash;</span>
       <select name="end" aria-label="To year"><option value="">To&hellip;</option>{% for y in range(1993, 2022) %}<option value="{{ y }}" {% if end == y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select>
+      <label class="sift-label"><input type="checkbox" name="fresh" value="1" {{ "checked" if filters.fresh }}> own words only</label>
+      {% if filters.month %}<input type="hidden" name="month" value="{{ filters.month }}"><span class="sift-label">{{ MONTHS[filters.month] }} only</span>{% endif %}
       {% block search_filters %}{% endblock %}
     </div>
   </form>
@@ -49,14 +51,21 @@
 {% endif %}
 {% block search_tools %}{% endblock %}
 {% if by_year %}
-{% set peak = by_year|map(attribute='n')|max %}
+{% set norm = request.args.get('norm') == '1' and by_year_rate %}
+{% set vals = by_year_rate if norm else by_year_counts %}
+{% set peak = (vals.values()|max) or 1 %}
 <figure class="viz chart hist">
-  <figcaption class="meta">Matching messages per year{% block hist_note %}{% endblock %}</figcaption>
+  <figcaption class="meta">Matching messages per year{% if norm %}, per 1,000 messages posted{% endif %}
+    {% if by_year_rate %}<span class="toggle-row">
+      {% if norm %}<a href="{{ page_url(1) }}">show counts</a>{% else %}<b>counts</b>{% endif %} ·
+      {% if norm %}<b>per 1,000 messages</b>{% else %}<a href="{{ page_url(1, norm=1) }}">per 1,000 messages</a>{% endif %}
+      {% if trends_link %} · <a href="{{ trends_link }}">{{ ic('ic-trends', 'ic-sm ic-quiet') }} open in Trends</a>{% endif %}
+    </span>{% endif %}</figcaption>
   <svg viewBox="0 0 406 66" role="img" aria-label="Bar chart of matching messages per year">
-  {% for r in by_year %}{% set h = (r.n / peak * 50)|round(1) %}
-    <g><title>{{ r.year }}: {{ "{:,}".format(r.n) }}</title>
-    <rect class="hit" x="{{ (r.year - 1993) * 14 }}" y="0" width="14" height="54"></rect>
-    <rect class="bar" x="{{ (r.year - 1993) * 14 + 2 }}" y="{{ 54 - h }}" width="10" height="{{ h }}" rx="2"></rect></g>
+  {% for y, v in vals.items() %}{% set h = (v / peak * 50)|round(1) %}
+    <g data-tip-title="{{ y }}" data-tip="{{ ('%.2f per 1,000 messages'|format(v)) if norm else ('{:,} messages'.format(v)) }}">
+    <rect class="hit" x="{{ (y - 1993) * 14 }}" y="0" width="14" height="54"></rect>
+    <rect class="bar" x="{{ (y - 1993) * 14 + 2 }}" y="{{ 54 - h }}" width="10" height="{{ h }}" rx="2"></rect></g>
   {% endfor %}
     <line class="base" x1="0" x2="406" y1="54" y2="54"></line>
     <text x="0" y="65">1993</text><text x="406" y="65" text-anchor="end">2021</text>
@@ -84,9 +93,9 @@
 
 {% if page > 1 or more %}
 <nav class="pagination" aria-label="Pagination">
-  {% if page > 1 %}<a class="btn-quiet" href="{{ page_url(page-1) }}">&larr; Previous</a>{% else %}<span></span>{% endif %}
+  {% if page > 1 %}<a class="btn-quiet" href="{{ page_url(page-1, norm=request.args.get('norm')) }}">&larr; Previous</a>{% else %}<span></span>{% endif %}
   <span class="page-info">Page {{ page }}</span>
-  {% if more %}<a class="btn-quiet" href="{{ page_url(page+1) }}">Next &rarr;</a>{% else %}<span></span>{% endif %}
+  {% if more %}<a class="btn-quiet" href="{{ page_url(page+1, norm=request.args.get('norm')) }}">Next &rarr;</a>{% else %}<span></span>{% endif %}
 </nav>
 {% endif %}
 {% endif %}
