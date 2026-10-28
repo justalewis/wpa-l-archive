@@ -9,6 +9,7 @@
     <h1>{{ m.subject or "(no subject)" }}</h1>
   </div>
   <div class="msg-head">
+    {% if genre %}<a class="genre-mark" href="{{ url_for('genres') }}">{{ ic(GENRE_ICONS[genre], 'ic-sm ic-quiet') }} {{ GENRE_NAMES[genre] }}</a>{% endif %}
     <span class="who">{{ who(m.from_name, m.person_id) }}</span>
     <span class="when">{{ m.sent_at|when }}{% if not m.dated %} (date header unreadable; month from the log file){% endif %}</span>
     {% if parent %}<span class="re">in reply to <a href="{{ url_for('message', uid=parent.uid) }}">{{ parent.from_name }}</a></span>{% endif %}

@@ -33,7 +33,7 @@ API_PAGE = 50
 API_PER_MINUTE = 60
 CORPORA_PER_HOUR = 10
 FIELDS = ["message_id", "thread_id", "poster_id", "poster_name", "date_utc", "year", "month",
-          "subject", "body", "body_own_words", "permalink"]
+          "genre", "subject", "body", "body_own_words", "permalink"]
 
 
 def register(app) -> None:
@@ -141,7 +141,8 @@ def register(app) -> None:
                 pid = name = pseud[pid]
             yield {
                 "message_id": m["uid"], "thread_id": m["thread_key"], "poster_id": pid, "poster_name": name,
-                "date_utc": m["sent_at"] or "", "year": m["year"], "month": m["month"], "subject": m["subject"],
+                "date_utc": m["sent_at"] or "", "year": m["year"], "month": m["month"],
+                "genre": m["genre"] if "genre" in m.keys() else "", "subject": m["subject"],
                 "body": m["body"], "body_own_words": m["body_fresh"] if has_fresh() else "",
                 "permalink": url_for("message", uid=m["uid"], _external=True),
             }
@@ -202,7 +203,8 @@ def register(app) -> None:
     def api_message(m, thread_key):
         url = url_for("message", uid=m["uid"], _external=True)
         return {"id": m["uid"], "thread_id": thread_key, "poster_id": m["person_id"], "poster_name": m["from_name"],
-                "date_utc": m["sent_at"], "year": m["year"], "month": m["month"], "subject": m["subject"],
+                "date_utc": m["sent_at"], "year": m["year"], "month": m["month"],
+                "genre": m["genre"] if "genre" in m.keys() else None, "subject": m["subject"],
                 "body": m["body"], "parent_id": m["parent_uid"], "permalink": url,
                 "citation": dict(citations(m["from_name"], m["subject"], m["sent_at"], m["year"], m["month"], url))}
 

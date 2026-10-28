@@ -1,0 +1,6 @@
+scikit-learn>=1.5
+networkx>=3.3
+bertopic>=0.16
+sentence-transformers>=3.0
+PyYAML>=6
+RapidFuzz>=3

@@ -72,7 +72,7 @@ def test_export_needs_terms_then_streams_fields(client):
     r = client.get("/export?q=placement&format=csv")
     rows = list(csv.DictReader(io.StringIO(r.data.decode())))
     assert rows and set(rows[0]) == {"message_id", "thread_id", "poster_id", "poster_name", "date_utc", "year",
-                                      "month", "subject", "body", "body_own_words", "permalink"}
+                                      "month", "genre", "subject", "body", "body_own_words", "permalink"}
     assert all("@example.edu" not in r["body"] for r in rows)
     assert r.headers["X-Robots-Tag"].startswith("noindex")
 

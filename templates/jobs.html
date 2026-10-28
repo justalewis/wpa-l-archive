@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}Job ads · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('genres') }}">{{ ic('ic-genre', 'ic-sm ic-quiet') }} Genres</a> / Job ads</p>
+<div class="page-head">
+  <h1>Job ads</h1>
+  <p class="lede">Positions announced on the list, sorted by the kind of job the ad describes. A labor-market record of the field, though only of the jobs someone chose to post here.</p>
+</div>
+
+<table class="data">
+  <thead><tr><th scope="col">Year</th>{% for k in kinds %}<th scope="col"><a href="{{ url_for('jobs', rank=k) }}">{{ k }}</a></th>{% endfor %}<th scope="col">All</th></tr></thead>
+  <tbody>{% for y, row in table.items() %}<tr><th scope="row"><a href="{{ url_for('jobs', year=y) }}">{{ y }}</a></th>
+    {% for k in kinds %}<td>{{ row[k] or '–' }}</td>{% endfor %}<td>{{ row.values()|sum }}</td></tr>{% endfor %}</tbody>
+</table>
+
+{% if listing %}
+<h2 class="section-head">{{ rank or "All kinds" }}{% if year %}, {{ year }}{% endif %} ({{ listing|length }}{% if listing|length == 300 %}+{% endif %})</h2>
+<ol class="entries">
+{% for j in listing %}
+  <li class="entry">
+    <div class="entry-meta"><span class="entry-date">{{ j.posted_at|when("%d %b %Y") }}</span><span>{{ j.rank_type }}</span>{% if j.institution %}<span>{{ j.institution }}</span>{% endif %}</div>
+    <div class="entry-title-row"><a class="entry-title" href="{{ url_for('message', uid=j.uid) }}">{{ j.title }}</a></div>
+  </li>
+{% endfor %}
+</ol>
+{% endif %}
+
+<h2 class="section-head">{{ ic('ic-institution', 'ic-sm ic-quiet') }} Institutions posting most often</h2>
+<table class="data">
+  <thead><tr><th scope="col">Institution</th><th scope="col">Ads</th><th scope="col">First</th><th scope="col">Last</th></tr></thead>
+  <tbody>{% for r in top %}<tr><td class="l">{{ r.institution }}</td><td>{{ r.n }}</td><td>{{ r.first }}</td><td>{{ r.last }}</td></tr>{% endfor %}</tbody>
+</table>
+
+<details class="methodology-section">
+  <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} Methodology</summary>
+  <div class="methodology-body">
+    <p>Job ads are messages labeled “job ad” on the Genres page that start a thread (replies about a job are left out). The kind comes from the ad's subject and opening: a writing center director or coordinator; a WPA (director of writing, composition or first-year writing); non-tenure-line (lecturer, instructor, visiting, adjunct, part-time); tenure-line (tenure-track, assistant, associate or full professor); postdocs and fellowships; and other. The first rule that matches wins, in that order. The institution is the first university, college or institute named in the subject or opening, so an ad that names a partner school first can be misattributed. An ad posted twice counts twice.</p>
+  </div>
+</details>
+{% endblock %}
