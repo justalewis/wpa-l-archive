@@ -1,3 +1,14 @@
+{# ============================================================
+   The Alexandrian shell, modeled on Pinakes' base-alexandrian.html:
+   the capsa on the left holds the wordmark, the destinations and the
+   years; the column on the right holds the page. On a narrow screen the
+   capsa lies above the column (wpa.css).
+
+   A page fills `content`, and optionally `column_class` (use
+   `column-inner--read` for message and thread pages, which narrows them
+   to the reading measure) and `title`.
+   ============================================================ #}
+{% from "_macros.html" import ic with context %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,28 +16,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <title>{% block title %}WPA-L Archive Reader{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='reader.css') }}">
+{% include "_head.html" %}
 </head>
 <body>
+{% include "_icons_wpa.html" %}
+<a class="skip" href="#main">Skip to content</a>
 <div class="draft-banner" role="note">Working draft. Page text is placeholder.</div>
-<header class="site">
-  <a class="brand" href="{{ url_for('home') }}">WPA-L Archive Reader</a>
-  <nav aria-label="Main">
-    <a href="{{ url_for('home') }}">Browse</a>
-    <a href="{{ url_for('search') }}">Search</a>
-    <a href="{{ url_for('timeline') }}">Timeline</a>
-    <a href="{{ url_for('about') }}">About</a>
-    <a href="{{ url_for('opt_out') }}">Opt out</a>
-  </nav>
-</header>
-<main>
-{% block body %}{% endblock %}
-</main>
-<footer class="site">
-  Source: the WPA-L archive, 1993–2021, deposited on the Internet Archive under a public-domain mark.
-  Email addresses are removed. <a href="{{ url_for('opt_out') }}">Ask to have your messages withdrawn</a>.
-</footer>
+
+<div class="layout">
+
+  <aside class="capsa">
+    <div class="capsa-head">
+      <a class="wordmark" href="{{ url_for('home') }}">
+        {{ ic('ic-wpa', 'ic-wordmark') }}
+        <span>
+          <span class="name">WPA-L Archive Reader</span>
+          <span class="sub">The Writing Program Administration list, 1993–2021</span>
+        </span>
+      </a>
+    </div>
+
+    <nav class="capsa-nav" aria-label="Sections and years">
+      {% for item in nav_items %}
+      <div class="nav-item">
+        <a class="nav-link" href="{{ url_for(item.endpoint) }}" {% if active_nav == item.key %}aria-current="page"{% endif %}>
+          {{ ic(item.icon, 'ic-sm') }}
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      </div>
+      {% endfor %}
+
+      <details class="tags-fold" id="tags-fold" open>
+        <summary><span>Years</span><span class="tags-count">{{ capsa_years|length }}</span></summary>
+        <div class="tags">
+          <div class="tags-head">Years</div>
+          {% for y in capsa_years %}
+          <a class="tag" href="{{ url_for('year_view', year=y.year) }}" {% if active_year == y.year %}aria-current="page"{% endif %}>
+            <span class="jname">{{ y.year }}</span>
+            <span class="jmeta"><span class="jcount">{{ "{:,}".format(y.n) }}</span></span>
+          </a>
+          {% endfor %}
+        </div>
+      </details>
+    </nav>
+
+    <div class="capsa-foot">
+      <a class="capsa-back" href="{{ url_for('home') }}">&#8592; All years</a>
+      <button class="figure-toggle" type="button" id="figure-toggle" aria-live="polite" hidden>Black-figure</button>
+    </div>
+  </aside>
+
+  <main class="column" id="main" tabindex="-1">
+    <div class="column-inner {% block column_class %}{% endblock %}">
+      {% block content %}{% endblock %}
+    </div>
+    <footer class="column-foot meta">
+      Source: the WPA-L archive, 1993–2021, deposited on the Internet Archive under a public-domain mark.
+      Email addresses are removed. <a href="{{ url_for('opt_out') }}">Ask to have your messages withdrawn</a>.
+    </footer>
+  </main>
+
+</div>
 </body>
 </html>

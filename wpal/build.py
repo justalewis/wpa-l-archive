@@ -29,7 +29,7 @@ from .threads import build_threads
 # per month reads every row, bodies included (40 s on a cold Fly volume).
 INDEXES = """
 CREATE INDEX IF NOT EXISTS messages_cover
-    ON messages(year, month, sent_at, thread_id, poster_key, name_key, from_name);
+    ON messages(year, month, sent_at, thread_id, poster_key, name_key, person_id, from_name);
 CREATE INDEX IF NOT EXISTS messages_parent ON messages(parent_uid, sent_at);
 """
 
@@ -48,6 +48,7 @@ CREATE TABLE messages (
     from_name TEXT NOT NULL,
     name_key TEXT NOT NULL, -- lowercased, sorted name tokens, for opt-out matching
     poster_key TEXT NOT NULL,
+    person_id TEXT,         -- canonical poster (wpal/stages/identity.py)
     subject TEXT NOT NULL,
     body TEXT NOT NULL,
     attachments TEXT NOT NULL,
@@ -72,6 +73,7 @@ CREATE TABLE threads (
     n_messages INTEGER NOT NULL
 );
 CREATE INDEX threads_ym ON threads(year, month, started_at);
+CREATE UNIQUE INDEX threads_root ON threads(root_uid);
 
 CREATE VIRTUAL TABLE messages_fts USING fts5(
     subject, body, content='messages', content_rowid='id',

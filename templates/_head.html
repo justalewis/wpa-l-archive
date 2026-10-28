@@ -1,0 +1,18 @@
+{# ============================================================
+   The Alexandrian Suite head, ported from Pinakes' _alexandrian_head.html.
+
+   Order matters. tokens.css declares the palette and the element
+   baseline, fonts.css maps the faces it names, wpa.css builds the
+   components on top. Nothing loads from a third party, and the pre-paint
+   figure script is a file on this origin rather than inline, so the CSP
+   stays at script-src 'self'; style-src 'self'; font-src 'self'.
+   ============================================================ #}
+<link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}?v={{ asset_v }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}?v={{ asset_v }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='wpa.css') }}?v={{ asset_v }}">
+
+<meta name="theme-color" content="#F5EFE1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171512" media="(prefers-color-scheme: dark)">
+
+<script src="{{ url_for('static', filename='figure-head.js') }}?v={{ asset_v }}"></script>
+<script src="{{ url_for('static', filename='site.js') }}?v={{ asset_v }}" defer></script>

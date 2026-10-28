@@ -1,14 +1,32 @@
 {% extends "base.html" %}
+{% from "_macros.html" import ic, who with context %}
 {% block title %}{{ MONTHS[month] }} {{ year }} · WPA-L Archive Reader{% endblock %}
-{% block body %}
+{% block content %}
 <p class="crumbs"><a href="{{ url_for('home') }}">All years</a> / <a href="{{ url_for('year_view', year=year) }}">{{ year }}</a> / {{ MONTHS[month] }}</p>
-<h1>{{ MONTHS[month] }} {{ year }}</h1>
-<p class="meta">{{ "{:,}".format(n) }} messages. Threads are listed by their first message this month; counts are for this month only.</p>
-<ol class="threads">
+<div class="page-head">
+  <h1>{{ MONTHS[month] }} {{ year }}</h1>
+  <span class="result-count">{{ "{:,}".format(n) }} messages</span>
+</div>
+<p class="meta">Threads are listed by their first message this month; counts are for this month only.</p>
+<ol class="entries">
 {% for r in rows %}
-  <li><a href="{{ url_for('thread', tid=r.thread_id) }}">{{ r.subject or "(no subject)" }}</a>
-    <span class="meta">{{ r.starter }} · {{ r.first_at|when("%d %b") }} · {{ r.n }} message{{ "s" if r.n != 1 }}</span></li>
+  <li class="entry">
+    <div class="entry-meta">
+      <span class="entry-date">{{ r.first_at|when("%d %b") }}</span>
+      <span>{{ who(r.starter, r.starter_pid) }}</span>
+      <span>{{ r.n }} message{{ "s" if r.n != 1 }}</span>
+    </div>
+    <div class="entry-title-row">
+      <a class="entry-title" href="{{ url_for('thread', key=r.thread_key) }}">{{ r.subject or "(no subject)" }}</a>
+    </div>
+  </li>
 {% endfor %}
 </ol>
-<p class="pager">{% if page > 1 %}<a href="?page={{ page-1 }}">← Earlier</a>{% endif %} {% if more %}<a href="?page={{ page+1 }}">Later →</a>{% endif %}</p>
+{% if page > 1 or more %}
+<nav class="pagination" aria-label="Pagination">
+  {% if page > 1 %}<a class="btn-quiet" href="?page={{ page-1 }}">&larr; Earlier</a>{% else %}<span></span>{% endif %}
+  <span class="page-info">Page {{ page }}</span>
+  {% if more %}<a class="btn-quiet" href="?page={{ page+1 }}">Later &rarr;</a>{% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
 {% endblock %}
