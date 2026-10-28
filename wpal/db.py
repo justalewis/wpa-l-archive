@@ -90,12 +90,26 @@ STATE_MIGRATIONS = [
     """,
 ]
 
+# A suppression of any one address or name withdraws the whole person it
+# belongs to (item 1): every address and name variant in that cluster. The
+# hidden set is small, so it is recomputed into a temp table per connection.
+HIDDEN_PERSONS = """
+CREATE TEMP TABLE IF NOT EXISTS hidden_persons (pid TEXT PRIMARY KEY);
+DELETE FROM hidden_persons;
+INSERT OR IGNORE INTO hidden_persons
+    SELECT key FROM req.suppression WHERE kind = 'person'
+    UNION SELECT person_id FROM main.messages
+          WHERE person_id IS NOT NULL
+            AND (poster_key IN (SELECT key FROM req.suppression WHERE kind = 'poster')
+                 OR name_key IN (SELECT key FROM req.suppression WHERE kind = 'name'));
+"""
+
 VISIBLE_VIEW = """
 CREATE TEMP VIEW IF NOT EXISTS visible AS
 SELECT * FROM main.messages m
 WHERE NOT EXISTS (SELECT 1 FROM req.suppression s WHERE s.kind = 'poster' AND s.key = m.poster_key)
   AND NOT EXISTS (SELECT 1 FROM req.suppression s WHERE s.kind = 'name' AND s.key = m.name_key)
-  AND NOT EXISTS (SELECT 1 FROM req.suppression s WHERE s.kind = 'person' AND s.key = m.person_id)
+  AND NOT EXISTS (SELECT 1 FROM temp.hidden_persons h WHERE h.pid = m.person_id)
 """
 
 
@@ -146,5 +160,6 @@ def connect(archive: str | None = None, requests: str | None = None) -> sqlite3.
     con = sqlite3.connect(f"file:{Path(archive).as_posix()}?mode=ro", uri=True, check_same_thread=False)
     con.row_factory = sqlite3.Row
     con.execute("ATTACH DATABASE ? AS req", (requests,))
+    con.executescript(HIDDEN_PERSONS)
     con.execute(VISIBLE_VIEW)
     return con

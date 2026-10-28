@@ -7,6 +7,7 @@ import sqlite3
 import pytest
 
 os.environ["WPAL_NO_AUTOAPP"] = "1"
+os.environ["WPAL_PUBLIC_MIN_POSTS"] = "1"  # fixture posters have a handful of posts each
 
 from wpal import build  # noqa: E402
 from wpal.app import create_app, fts_query  # noqa: E402
@@ -161,3 +162,28 @@ def test_optout_rejects_missing_fields_and_bad_token(client, paths):
 ])
 def test_fts_query(raw, expected):
     assert fts_query(raw) == expected
+
+
+def test_person_pages_and_withdrawal(client, paths):
+    db, req = paths
+    pid = one(db, "SELECT person_id FROM persons WHERE display_name = 'Rowan Ledger'")[0]
+    assert client.get(f"/person/{pid}").status_code == 200
+    assert f"/person/{pid}".encode() in client.get("/people").data
+    # Names link to person pages wherever they appear.
+    key = one(db, "SELECT t.root_uid FROM messages m JOIN threads t ON t.id = m.thread_id WHERE m.person_id = ? LIMIT 1", pid)[0]
+    assert f"/person/{pid}".encode() in client.get(f"/t/{key}").data
+    assert b"/person/" in client.get("/browse/2011/7").data
+    # Withdrawing one address withdraws the whole person.
+    pkey = one(db, "SELECT poster_key FROM messages WHERE person_id = ? LIMIT 1", pid)[0]
+    suppress(req, "poster", pkey)
+    assert client.get(f"/person/{pid}").status_code == 410
+    assert f"/person/{pid}".encode() not in client.get("/people").data
+    for (uid,) in sqlite3.connect(db).execute("SELECT uid FROM messages WHERE person_id = ?", (pid,)):
+        assert client.get(f"/m/{uid}").status_code == 410
+
+
+def test_unnamed_posters_get_no_page(client, paths):
+    db, _ = paths
+    row = one(db, "SELECT person_id, public FROM persons WHERE display_name = 'Unnamed poster'")
+    if row:
+        assert row[1] == 0 and client.get(f"/person/{row[0]}").status_code == 404

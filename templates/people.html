@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}People · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>People</h1>
+  <span class="result-count">{{ "{:,}".format(rows|length) }} posters</span>
+  <p class="lede">Everyone who posted at least {{ threshold }} messages and has not withdrawn. Names are grouped across spellings and addresses; see the method on any person's page.</p>
+</div>
+<div class="sift"><div class="sift-row">
+  <span class="sift-label">Sort</span>
+  {% for key, label in [("posts", "Most messages"), ("name", "Name"), ("first", "First post")] %}
+    {% if sort == key %}<b>{{ label }}</b>{% else %}<a href="?sort={{ key }}">{{ label }}</a>{% endif %}
+  {% endfor %}
+</div></div>
+<table class="data">
+  <thead><tr><th scope="col">Name</th><th scope="col">Messages</th><th scope="col">Threads started</th><th scope="col">First</th><th scope="col">Last</th></tr></thead>
+  <tbody>
+  {% for p in rows %}
+  <tr><td class="l"><a href="{{ url_for('person', pid=p.person_id) }}">{{ p.display_name }}</a></td>
+      <td>{{ "{:,}".format(p.n_posts) }}</td><td>{{ "{:,}".format(p.n_started) }}</td>
+      <td>{{ p.first_at|when("%Y") }}</td><td>{{ p.last_at|when("%Y") }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

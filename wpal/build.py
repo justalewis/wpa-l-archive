@@ -1,6 +1,7 @@
 """Parse every monthly log, rebuild threads, and load SQLite with FTS5.
 
     python -m wpal.build [--raw data/raw] [--db data/archive.db] [--only 1993]
+    python -m wpal.build --stages identity     (re-run stages on the existing DB)
 
 The raw logs are read, never written. The database is rebuilt from scratch on
 each run; opt-out requests and suppressions live in a separate file
@@ -15,12 +16,14 @@ import json
 import os
 import re
 import secrets
+import shutil
 import sqlite3
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
+from . import stages
 from .parse import parse_file
 from .threads import build_threads
 
@@ -116,7 +119,14 @@ def main(argv=None):
     ap.add_argument("--only", help="restrict to file names containing this string")
     ap.add_argument("--report", default="reports/coverage.md")
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
+    ap.add_argument("--decisions", default="decisions")
+    ap.add_argument("--reference", default="data/reference")
+    ap.add_argument("--stages", help="comma-separated: re-run these stages (and later ones) on the existing DB")
+    ap.add_argument("--skip-stages", default="", help="comma-separated stages to leave out (e.g. topics)")
     a = ap.parse_args(argv)
+    a.skip_stages = [s for s in a.skip_stages.split(",") if s]
+    if a.stages:
+        return rerun_stages(a)
 
     raw = Path(a.raw)
     files = sorted(p for p in raw.rglob("*.txt") if FILE_RE.search(p.name))
@@ -218,15 +228,53 @@ def main(argv=None):
         INSERT INTO messages_fts(messages_fts) VALUES ('optimize');
     """)
 
+    db.commit()
+    ctx = stages.Context(decisions=Path(a.decisions), previous_db=Path(a.db), reference=Path(a.reference))
+    stages.run(db, ctx, skip=a.skip_stages)
+
     report = coverage(db, per_file, recovered)
-    db.execute("INSERT INTO meta VALUES ('built_at', ?)", (time.strftime("%Y-%m-%dT%H:%M:%S"),))
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%S")
+    db.execute("INSERT INTO meta VALUES ('built_at', ?)", (stamp,))
+    db.execute("INSERT INTO meta VALUES ('build_id', ?)", (stamp,))
     db.execute("INSERT INTO meta VALUES ('coverage', ?)", (json.dumps(report),))
     db.commit()
     db.close()
-    os.replace(tmp, a.db)
+    _swap(tmp, Path(a.db))
     Path(a.report).parent.mkdir(parents=True, exist_ok=True)
     write_report(report, Path(a.report))
     print(f"done in {time.time() - t0:.0f}s -> {a.db}")
+
+
+def _swap(tmp: Path, dst: Path) -> None:
+    """Move the finished build into place. Windows can hold a just-written
+    file briefly (antivirus, indexer), so retry for a while before failing."""
+    for attempt in range(30):
+        try:
+            os.replace(tmp, dst)
+            return
+        except PermissionError:
+            if attempt == 29:
+                raise
+            time.sleep(2)
+
+
+def rerun_stages(a):
+    """Run stages on a copy of the finished database, then swap it in."""
+    t0 = time.time()
+    src = Path(a.db)
+    tmp = Path(a.db + ".building")
+    shutil.copyfile(src, tmp)
+    db = sqlite3.connect(tmp)
+    db.execute("PRAGMA journal_mode=OFF")
+    db.execute("PRAGMA synchronous=OFF")
+    ctx = stages.Context(decisions=Path(a.decisions), previous_db=src, reference=Path(a.reference))
+    stages.run(db, ctx, only=a.stages.split(","), skip=a.skip_stages)
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%S")
+    db.execute("INSERT OR REPLACE INTO meta VALUES ('stages_at', ?)", (stamp,))
+    db.commit()
+    db.close()
+    _swap(tmp, src)
+    print(f"stages done in {time.time() - t0:.0f}s -> {src}")
 
 
 def coverage(db, per_file, recovered):

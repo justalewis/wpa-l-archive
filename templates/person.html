@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic, who with context %}
+{% block title %}{{ p.display_name }} · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('people') }}">{{ ic('ic-person', 'ic-sm ic-quiet') }} People</a></p>
+<div class="page-head">
+  <h1>{{ p.display_name }}</h1>
+  <p class="lede">{{ "{:,}".format(p.n_posts) }} messages to WPA-L from {{ p.first_at|when("%B %Y") }} to {{ p.last_at|when("%B %Y") }}: {{ "{:,}".format(p.n_started) }} starting a thread, {{ "{:,}".format(p.n_replies) }} in one already under way.</p>
+</div>
+
+<figure class="viz chart hist">
+  <figcaption class="meta">Messages per year</figcaption>
+  <svg viewBox="0 0 406 66" role="img" aria-label="Bar chart of {{ p.display_name }}'s messages per year">
+  {% for y in range(1993, 2022) %}{% set n = per_year.get(y, 0) %}{% set h = (n / peak * 50)|round(1) %}
+    <g><title>{{ y }}: {{ n }}</title>
+    <rect class="hit" x="{{ (y - 1993) * 14 }}" y="0" width="14" height="54"></rect>
+    {% if n %}<rect class="bar" x="{{ (y - 1993) * 14 + 2 }}" y="{{ 54 - h }}" width="10" height="{{ h }}" rx="2"></rect>{% endif %}</g>
+  {% endfor %}
+    <line class="base" x1="0" x2="406" y1="54" y2="54"></line>
+    <text x="0" y="65">1993</text><text x="406" y="65" text-anchor="end">2021</text>
+  </svg>
+</figure>
+
+<div class="tool-grid">
+  <section>
+    <h2 class="section-head">Names as posted</h2>
+    <table class="data">
+      <tbody>{% for a in aliases[:12] %}<tr><td class="l">{{ a.name }}</td><td>{{ "{:,}".format(a.n) }}</td></tr>{% endfor %}</tbody>
+    </table>
+    {% if aliases|length > 12 %}<p class="meta">and {{ aliases|length - 12 }} more spellings.</p>{% endif %}
+  </section>
+  <section>
+    <h2 class="section-head">{{ ic('ic-institution', 'ic-sm ic-quiet') }} Affiliations in signatures</h2>
+    {% if affs %}
+    <table class="data">
+      <thead><tr><th scope="col">Institution</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Sigs</th></tr></thead>
+      <tbody>{% for a in affs %}<tr><td class="l">{{ a.institution }}</td><td>{{ a.first_at|when("%Y") }}</td><td>{{ a.last_at|when("%Y") }}</td><td>{{ a.n }}</td></tr>{% endfor %}</tbody>
+    </table>
+    {% else %}<p class="meta">{{ ic('ic-institution', 'ic-sm ic-absent') }} No institution recurs in this person's signatures.</p>{% endif %}
+  </section>
+</div>
+
+<h2 class="section-head">{{ ic('ic-network', 'ic-sm ic-quiet') }} Most frequent exchanges</h2>
+{% if partners %}
+<p class="meta">People this person replied to, or who replied to them, at least {{ edge_min }} times. Before 2010 many reply links are inferred from subject lines, so treat these counts as approximate.</p>
+<table class="data">
+  <tbody>{% for r in partners %}<tr><td class="l">{{ who(names.get(r.other, ''), r.other) }}</td><td>{{ r.n }}</td></tr>{% endfor %}</tbody>
+</table>
+{% else %}<p class="meta">{{ ic('ic-network', 'ic-sm ic-absent') }} No exchange with another listed person reaches {{ edge_min }} replies.</p>{% endif %}
+
+<h2 class="section-head">Recent messages</h2>
+<ol class="entries">
+{% for m in recent %}
+  <li class="entry">
+    <div class="entry-meta"><span class="entry-date">{{ m.sent_at|when("%d %b %Y") }}</span><span>{{ "started the thread" if m.started else "reply" }}</span></div>
+    <div class="entry-title-row"><a class="entry-title" href="{{ url_for('message', uid=m.uid) }}">{{ m.subject or "(no subject)" }}</a></div>
+  </li>
+{% endfor %}
+</ol>
+<p><a href="{{ url_for('search') }}?from={{ p.display_name|urlencode }}">All messages under this name &rarr;</a></p>
+
+<details class="methodology-section">
+  <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} How this page is made</summary>
+  <div class="methodology-body">
+    <p>Messages are grouped into one person when they came from the same address (the address itself is not kept), or when the names on two addresses normalize to the same first and last name. Merges by name can join two different people who share a name; corrections are recorded in the build's decision files and survive rebuilds.</p>
+    <p>Affiliations are institution names that recur in this person's signature blocks, with the first and last year each appears. Pages exist only for people with at least 25 messages, and anyone can withdraw theirs through the opt-out form.</p>
+  </div>
+</details>
+{% endblock %}
