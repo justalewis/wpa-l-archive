@@ -1,0 +1,53 @@
+# Events for the chart overlays (item 11). One entry per event; add a line and
+# rebuild (python -m wpal.build --stages events) to show it everywhere.
+#
+#   date:      YYYY-MM-DD, or YYYY-MM when only the month is known
+#   end:       optional, for a range
+#   label:     short; shown on hover
+#   category:  cccc | cwpa | statement | news | list
+#   source:    a URL. For CCCC conventions this is a search of the list's own
+#              messages that names the city that year, which is how each host
+#              city was checked (2026-10-27). Months are approximate unless a
+#              day is given.
+
+- {date: 1993-03, label: "CCCC, San Diego", category: cccc, source: "/search?q=CCCC+%22San+Diego%22&start=1993&end=1993"}
+- {date: 1994-03, label: "CCCC, Nashville", category: cccc, source: "/search?q=CCCC+Nashville&start=1994&end=1994"}
+- {date: 1995-03, label: "CCCC, Washington, DC", category: cccc, source: "/search?q=CCCC+Washington&start=1995&end=1995"}
+- {date: 1996-03, label: "CCCC, Milwaukee", category: cccc, source: "/search?q=CCCC+Milwaukee&start=1996&end=1996"}
+- {date: 1997-03, label: "CCCC, Phoenix", category: cccc, source: "/search?q=CCCC+Phoenix&start=1997&end=1997"}
+- {date: 1998-04, label: "CCCC, Chicago", category: cccc, source: "/search?q=CCCC+Chicago&start=1998&end=1998"}
+- {date: 1999-03, label: "CCCC, Atlanta", category: cccc, source: "/search?q=CCCC+Atlanta&start=1999&end=1999"}
+- {date: 2000-04, label: "CCCC, Minneapolis", category: cccc, source: "/search?q=CCCC+Minneapolis&start=2000&end=2000"}
+- {date: 2001-03, label: "CCCC, Denver", category: cccc, source: "/search?q=CCCC+Denver&start=2001&end=2001"}
+- {date: 2002-03, label: "CCCC, Chicago", category: cccc, source: "/search?q=CCCC+Chicago&start=2002&end=2002"}
+- {date: 2003-03, label: "CCCC, New York", category: cccc, source: "/search?q=CCCC+%22New+York%22&start=2003&end=2003"}
+- {date: 2004-03, label: "CCCC, San Antonio", category: cccc, source: "/search?q=CCCC+%22San+Antonio%22&start=2004&end=2004"}
+- {date: 2005-03, label: "CCCC, San Francisco", category: cccc, source: "/search?q=CCCC+%22San+Francisco%22&start=2005&end=2005"}
+- {date: 2006-03, label: "CCCC, Chicago", category: cccc, source: "/search?q=CCCC+Chicago&start=2006&end=2006"}
+- {date: 2007-03, label: "CCCC, New York", category: cccc, source: "/search?q=CCCC+%22New+York%22&start=2007&end=2007"}
+- {date: 2008-04, label: "CCCC, New Orleans", category: cccc, source: "/search?q=CCCC+%22New+Orleans%22&start=2008&end=2008"}
+- {date: 2009-03, label: "CCCC, San Francisco", category: cccc, source: "/search?q=CCCC+%22San+Francisco%22&start=2009&end=2009"}
+- {date: 2010-03, label: "CCCC, Louisville", category: cccc, source: "/search?q=CCCC+Louisville&start=2010&end=2010"}
+- {date: 2011-04, label: "CCCC, Atlanta", category: cccc, source: "/search?q=CCCC+Atlanta&start=2011&end=2011"}
+- {date: 2012-03, label: "CCCC, St. Louis", category: cccc, source: "/search?q=CCCC+%22St+Louis%22&start=2012&end=2012"}
+- {date: 2013-03, label: "CCCC, Las Vegas", category: cccc, source: "/search?q=CCCC+%22Las+Vegas%22&start=2013&end=2013"}
+- {date: 2014-03, label: "CCCC, Indianapolis", category: cccc, source: "/search?q=CCCC+Indianapolis&start=2014&end=2014"}
+- {date: 2015-03, label: "CCCC, Tampa", category: cccc, source: "/search?q=CCCC+Tampa&start=2015&end=2015"}
+- {date: 2016-04, label: "CCCC, Houston", category: cccc, source: "/search?q=CCCC+Houston&start=2016&end=2016"}
+- {date: 2017-03, label: "CCCC, Portland", category: cccc, source: "/search?q=CCCC+Portland&start=2017&end=2017"}
+- {date: 2018-03, label: "CCCC, Kansas City", category: cccc, source: "/search?q=CCCC+%22Kansas+City%22&start=2018&end=2018"}
+- {date: 2019-03, label: "CCCC, Pittsburgh (Chair's Address)", category: cccc, source: "/search?q=CCCC+Pittsburgh&start=2019&end=2019"}
+- {date: 2020-03, label: "CCCC, Milwaukee (cancelled: COVID-19)", category: cccc, source: "/search?q=CCCC+Milwaukee&start=2020&end=2020"}
+- {date: 2021-04, label: "CCCC (online)", category: cccc, source: "/search?q=CCCC&start=2021&end=2021"}
+
+- {date: 2000-04, label: "WPA Outcomes Statement for First-Year Composition adopted", category: statement, source: "/search?q=%22outcomes+statement%22&start=2000&end=2000"}
+- {date: 2008-07, label: "WPA Outcomes Statement, version 2.0", category: statement, source: "/search?q=%22outcomes+statement%22&start=2008&end=2008"}
+- {date: 2011-01, label: "Framework for Success in Postsecondary Writing", category: statement, source: "/search?q=%22Framework+for+Success%22&start=2011&end=2011"}
+- {date: 2014-07, label: "WPA Outcomes Statement, version 3.0", category: statement, source: "/search?q=%22outcomes+statement%22&start=2014&end=2014"}
+
+- {date: 2001-09-11, label: "September 11 attacks", category: news, source: "/search?q=terrorism&start=2001&end=2001&month=9"}
+- {date: 2005-08-29, label: "Hurricane Katrina", category: news, source: "/search?q=Katrina&start=2005&end=2005"}
+- {date: 2008-09-15, label: "Financial crisis (Lehman Brothers collapse)", category: news, source: "/search?q=budget+cuts&start=2008&end=2009"}
+- {date: 2020-03-11, label: "COVID-19 declared a pandemic", category: news, source: "/search?q=COVID&start=2020&end=2020&month=3"}
+
+- {date: 2021-05, label: "WPA-L leaves Arizona State; the archive ends", category: list, source: "/search?start=2021&end=2021&month=5&q=list"}

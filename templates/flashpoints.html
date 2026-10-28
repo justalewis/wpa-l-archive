@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}Flashpoints · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Flashpoints</h1>
+  <p class="lede">The list's most intense episodes: threads that drew many people quickly, and weeks when volume, departures, or talk about the list itself rose well above the ordinary. Labels describe activity only.</p>
+</div>
+<div class="sift"><div class="sift-row">
+  {% if kind == "thread" %}<b>Threads</b> · <a href="{{ url_for('flashpoints', kind='week') }}">Weeks</a>{% else %}<a href="{{ url_for('flashpoints') }}">Threads</a> · <b>Weeks</b>{% endif %}
+</div></div>
+<ol class="entries">
+{% for it in items %}
+  <li class="entry">
+    <div class="entry-meta"><span>#{{ it.r.rank }}</span><span class="entry-date">{{ it.r.start[:10] }}{% if it.r.finish[:10] != it.r.start[:10] %} to {{ it.r.finish[:10] }}{% endif %}</span></div>
+    <div class="entry-title-row">{% if it.href %}<a class="entry-title" href="{{ it.href }}">{{ it.title }}</a>{% else %}<span class="entry-title">{{ it.title }}</span>{% endif %}</div>
+    <p class="meta">{{ it.r.label }}.</p>
+    <svg class="trace chart" viewBox="0 0 {{ it.trace.W }} {{ it.trace.H }}" role="img" aria-label="Messages per day">
+      {% for x, y, w, h, v, d in it.trace.bars %}<rect class="bar" x="{{ x }}" y="{{ y }}" width="{{ w }}" height="{{ h }}" data-tip-title="{{ d }}" data-tip="{{ v }} messages"></rect>{% endfor %}
+    </svg>
+    {% if it.threads %}<p class="meta">Busiest threads that week: {% for t in it.threads %}<a href="{{ url_for('thread', key=t.root_uid) }}">{{ t.subject }}</a> ({{ t.n }}){{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+  </li>
+{% endfor %}
+</ol>
+<details class="methodology-section">
+  <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} Methodology</summary>
+  <div class="methodology-body">
+    <p><b>Threads</b> of five or more messages are scored on message count, distinct people, reply depth, the busiest day, and the share of participants who posted fewer than ten messages in all (a thread that draws in rarely-heard voices reaches past the regulars), with shorter duration counting toward intensity. <b>Weeks</b> are scored on volume against the median of the previous 26 weeks, the share of messages that are list business or departures, and the share that talk about the list itself. Each measure is standardized and averaged. Before 2010, thread boundaries are reconstructed (see each thread's confidence note), so very long subject-line threads can rank higher than the conversation they hold.</p>
+  </div>
+</details>
+{% endblock %}

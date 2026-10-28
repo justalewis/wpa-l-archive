@@ -120,6 +120,12 @@ def register(app) -> None:
             series.append({"term": term, "slot": i + 1, "vals": vals, "total": total})
 
         chart = layout(series, axis, unit) if series else None
+        event_marks = []
+        if chart and hasattr(app, "event_overlay"):
+            idx = {p: i for i, p in enumerate(axis)}
+            xs = [pt[0] for pt in series[0]["points"]]
+            event_marks = app.event_overlay(
+                lambda y, m: xs[idx[(y, m if unit == "month" else 0)]] if (y, m if unit == "month" else 0) in idx else None)
         params = {"terms": ", ".join(terms), "unit": unit, "measure": measure, "count": mode,
                   "fresh": "1" if fresh else "", "smooth": smooth}
 
@@ -137,6 +143,7 @@ def register(app) -> None:
         return render_template("trends.html", terms=terms, raw_terms=raw_terms, unit=unit, measure=measure, mode=mode,
                                fresh=fresh, smooth=smooth, chart=chart, series=series, notes=notes, with_=with_,
                                point_url=point_url, has_denominators=bool(den), max_terms=MAX_TERMS,
+                               event_marks=event_marks,
                                active_nav="trends", **app_extras("trends"))
 
     def app_extras(name):

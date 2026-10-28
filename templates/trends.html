@@ -19,6 +19,7 @@
   <label for="smooth">Smoothing</label>
   <select id="smooth" name="smooth"><option value="0">none</option><option value="3" {{ "selected" if smooth == "3" }}>3 months</option><option value="12" {{ "selected" if smooth == "12" }}>12 months</option></select>
   <label><input type="checkbox" name="fresh" value="1" {{ "checked" if fresh }}> own words only (no quoted text)</label>
+  <label><input type="checkbox" name="events" value="1" {{ "checked" if events_on }}> show events</label>
   <button class="btn" type="submit">Draw</button>
 </form>
 
