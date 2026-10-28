@@ -1,21 +1,31 @@
 {% extends "base.html" %}
+{% from "_macros.html" import ic, who with context %}
 {% block title %}{{ m.subject }} · WPA-L Archive Reader{% endblock %}
-{% block body %}
-<p class="crumbs"><a href="{{ url_for('home') }}">All years</a> / <a href="{{ url_for('year_view', year=m.year) }}">{{ m.year }}</a> / <a href="{{ url_for('month_view', year=m.year, month=m.month) }}">{{ MONTHS[m.month] }}</a> / <a href="{{ url_for('thread', tid=m.thread_id) }}#{{ m.uid }}">thread</a></p>
-<article class="msg single">
-  <h1>{{ m.subject or "(no subject)" }}</h1>
-  <header>
-    <span class="who">{{ m.from_name }}</span>
+{% block column_class %}column-inner--read{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('home') }}">All years</a> / <a href="{{ url_for('year_view', year=m.year) }}">{{ m.year }}</a> / <a href="{{ url_for('month_view', year=m.year, month=m.month) }}">{{ MONTHS[m.month] }}</a> / <a href="{{ url_for('thread', key=thread_key) }}#{{ m.uid }}">{{ ic('ic-thread', 'ic-sm ic-quiet') }} thread</a></p>
+<article class="msg">
+  <div class="page-head">
+    <h1>{{ m.subject or "(no subject)" }}</h1>
+  </div>
+  <div class="msg-head">
+    <span class="who">{{ who(m.from_name, m.person_id) }}</span>
     <span class="when">{{ m.sent_at|when }}{% if not m.dated %} (date header unreadable; month from the log file){% endif %}</span>
-  </header>
-  {% if parent %}<p class="re">In reply to <a href="{{ url_for('message', uid=parent.uid) }}">{{ parent.from_name }}</a>.</p>{% endif %}
-  <div class="body">{{ m.body|render_body }}</div>
-  {% if attachments %}<p class="meta">Attachments not carried over: {{ attachments|join(", ") }}.</p>{% endif %}
-  {% if replies %}<p class="meta">Replies: {% for r in replies %}<a href="{{ url_for('message', uid=r.uid) }}">{{ r.from_name }}</a>{{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+    {% if parent %}<span class="re">in reply to <a href="{{ url_for('message', uid=parent.uid) }}">{{ parent.from_name }}</a></span>{% endif %}
+  </div>
+  <div class="msg-body">{{ m.body|render_body }}</div>
+  <div class="msg-foot">
+    {% if attachments %}<span>{{ ic('ic-attachment', 'ic-sm ic-quiet') }} Attachments not kept here: {{ attachments|join(", ") }}</span>{% endif %}
+    {% if replies %}<span>Replies: {% for r in replies %}<a href="{{ url_for('message', uid=r.uid) }}">{{ r.from_name }}</a>{{ ", " if not loop.last }}{% endfor %}</span>{% endif %}
+  </div>
 </article>
-<section class="cite">
-  <h2>Cite this message</h2>
-  <p>{{ m.from_name }}. “{{ m.subject }}.” <i>WPA-L</i>, {% if m.sent_at %}{{ m.sent_at|when("%d %B %Y") }}{% else %}{{ MONTHS[m.month] }} {{ m.year }}{% endif %}. WPA-L Archive Reader, {{ permalink }}.</p>
+{% block message_extra %}{% endblock %}
+<section class="cite-box">
+  <h2>{{ ic('ic-citation', 'ic-sm ic-quiet') }} Cite this message</h2>
+  {% for style, text in citations %}
+  <p class="style">{{ style }} <button class="copy-btn" type="button" data-copy="#cite-{{ loop.index }}" hidden>Copy</button></p>
+  <p class="cite" id="cite-{{ loop.index }}">{{ text }}</p>
+  {% endfor %}
   <p class="meta">Permanent id <code>{{ m.uid }}</code>. Source log {{ m.source_file }}, message {{ m.ordinal + 1 }}.</p>
 </section>
 {% endblock %}

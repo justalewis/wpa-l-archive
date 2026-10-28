@@ -1,0 +1,10 @@
+{# An icon from the sprite. Decorative by default; pass label= for an icon
+   that stands alone as a control. #}
+{% macro ic(name, cls='', label=None) -%}
+<svg class="ic {{ cls }}" {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %}><use href="#{{ name }}"/></svg>
+{%- endmacro %}
+
+{# A poster's name, linked to their person page when they have a public one. #}
+{% macro who(name, person_id=None) -%}
+{% if person_id and person_id in public_persons %}<a href="{{ url_for('person', pid=person_id) }}">{{ name }}</a>{% else %}{{ name }}{% endif %}
+{%- endmacro %}

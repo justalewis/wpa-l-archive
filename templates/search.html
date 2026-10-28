@@ -1,40 +1,74 @@
 {% extends "base.html" %}
+{% from "_macros.html" import ic, who with context %}
 {% block title %}Search · WPA-L Archive Reader{% endblock %}
-{% block body %}
-<h1>Search</h1>
-<form class="search" method="get" role="search">
-  <div class="f"><label for="q">Words or "a phrase"</label><input id="q" name="q" type="search" value="{{ q }}"></div>
-  <div class="f"><label for="from">Posted by (name contains)</label><input id="from" name="from" value="{{ who }}"></div>
-  <div class="f small"><label for="start">From year</label><input id="start" name="start" type="number" min="1993" max="2021" value="{{ start or '' }}"></div>
-  <div class="f small"><label for="end">To year</label><input id="end" name="end" type="number" min="1993" max="2021" value="{{ end or '' }}"></div>
-  <button type="submit">Search</button>
-</form>
+{% block content %}
+<div class="page-head">
+  <h1>Search</h1>
+  {% if q or who_q %}<span class="result-count">{{ "{:,}".format(n) }} message{{ "s" if n != 1 }}</span>{% endif %}
+</div>
+
+<div class="sift">
+  <form method="get" role="search" autocomplete="off">
+    <div class="sift-row">
+      <input type="text" name="q" value="{{ q }}" placeholder="Words, or &quot;a phrase&quot;" aria-label="Words or phrase" spellcheck="false">
+      <button class="btn" type="submit">Search</button>
+    </div>
+    <div class="sift-row">
+      <span class="sift-label">Posted by</span>
+      <input type="text" name="from" value="{{ who_q }}" placeholder="Name contains" aria-label="Posted by (name contains)">
+      <span class="sift-label">Years</span>
+      <select name="start" aria-label="From year"><option value="">From&hellip;</option>{% for y in range(1993, 2022) %}<option value="{{ y }}" {% if start == y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select>
+      <span class="sift-dash">&ndash;</span>
+      <select name="end" aria-label="To year"><option value="">To&hellip;</option>{% for y in range(1993, 2022) %}<option value="{{ y }}" {% if end == y %}selected{% endif %}>{{ y }}</option>{% endfor %}</select>
+      {% block search_filters %}{% endblock %}
+    </div>
+  </form>
+</div>
+
 {% if error %}<p class="err">{{ error }}</p>{% endif %}
-{% if q or who %}
-<p class="meta">{{ "{:,}".format(n) }} message{{ "s" if n != 1 }}{% if q %}, ranked by relevance{% else %}, oldest first{% endif %}.</p>
+
+{% if q or who_q %}
+{% block search_tools %}{% endblock %}
 {% if by_year %}
 {% set peak = by_year|map(attribute='n')|max %}
-<figure class="hist">
-  <figcaption>Matches per year</figcaption>
-  <svg viewBox="0 0 406 66" role="img" aria-label="Bar chart of matches per year">
+<figure class="viz chart hist">
+  <figcaption class="meta">Matching messages per year{% block hist_note %}{% endblock %}</figcaption>
+  <svg viewBox="0 0 406 66" role="img" aria-label="Bar chart of matching messages per year">
   {% for r in by_year %}{% set h = (r.n / peak * 50)|round(1) %}
     <g><title>{{ r.year }}: {{ "{:,}".format(r.n) }}</title>
     <rect class="hit" x="{{ (r.year - 1993) * 14 }}" y="0" width="14" height="54"></rect>
     <rect class="bar" x="{{ (r.year - 1993) * 14 + 2 }}" y="{{ 54 - h }}" width="10" height="{{ h }}" rx="2"></rect></g>
   {% endfor %}
     <line class="base" x1="0" x2="406" y1="54" y2="54"></line>
-    <text class="axis" x="0" y="65">1993</text><text class="axis" x="406" y="65" text-anchor="end">2021</text>
+    <text x="0" y="65">1993</text><text x="406" y="65" text-anchor="end">2021</text>
   </svg>
 </figure>
 {% endif %}
-<ol class="results">
+
+{% if results %}
+<ol class="entries">
 {% for r in results %}
-  <li><a href="{{ url_for('message', uid=r.uid) }}">{{ r.subject or "(no subject)" }}</a>
-    <span class="meta">{{ r.from_name }} · {{ r.sent_at|when("%d %b %Y") }} · <a href="{{ url_for('thread', tid=r.thread_id) }}#{{ r.uid }}">thread</a></span>
-    <p class="snip">{{ r.snip|snip }}</p></li>
+  <li class="entry">
+    <div class="entry-meta">
+      <span class="entry-date">{{ r.sent_at|when("%d %b %Y") }}</span>
+      <span>{{ who(r.from_name, r.person_id) }}</span>
+      <a href="{{ url_for('thread', key=r.thread_key) }}#{{ r.uid }}">{{ ic('ic-thread', 'ic-sm ic-quiet') }} thread</a>
+    </div>
+    <div class="entry-title-row"><a class="entry-title" href="{{ url_for('message', uid=r.uid) }}">{{ r.subject or "(no subject)" }}</a></div>
+    <p class="snip meta">{{ r.snip|snip }}</p>
+  </li>
 {% endfor %}
 </ol>
-<p class="pager">{% if page > 1 %}<a href="{{ url_for('search', q=q, from=who, start=start, end=end, page=page-1) }}">← Previous</a>{% endif %}
-{% if more %}<a href="{{ url_for('search', q=q, from=who, start=start, end=end, page=page+1) }}">Next →</a>{% endif %}</p>
+{% elif not error %}
+<div class="empty"><p>{{ ic('ic-search', 'ic-absent') }} No messages matched.</p></div>
+{% endif %}
+
+{% if page > 1 or more %}
+<nav class="pagination" aria-label="Pagination">
+  {% if page > 1 %}<a class="btn-quiet" href="{{ page_url(page-1) }}">&larr; Previous</a>{% else %}<span></span>{% endif %}
+  <span class="page-info">Page {{ page }}</span>
+  {% if more %}<a class="btn-quiet" href="{{ page_url(page+1) }}">Next &rarr;</a>{% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
 {% endif %}
 {% endblock %}

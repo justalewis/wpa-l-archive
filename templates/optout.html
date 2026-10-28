@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Opt out · WPA-L Archive Reader{% endblock %}
-{% block body %}
+{% block content %}
 <h1>Withdraw your messages from this reader</h1>
 <p class="placeholder">[Draft placeholder; final wording to come.] If you posted to WPA-L and don't want your messages shown here, send this form. Once the request is confirmed, your messages stop appearing in browsing, threads, search, and permalinks. This does not change the copy on the Internet Archive.</p>
 {% if errors %}<ul class="err">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-<form class="optout" method="post">
+<form class="form" method="post">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
   <div class="f"><label for="name_as_posted">Name your messages were posted under</label>

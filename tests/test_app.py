@@ -64,15 +64,36 @@ def test_no_addresses_in_database(paths):
 def test_noindex_everywhere(client, paths):
     db, _ = paths
     uid = one(db, "SELECT uid FROM messages LIMIT 1")[0]
-    tid = one(db, "SELECT thread_id FROM messages LIMIT 1")[0]
-    for url in ["/", "/browse/1993", "/browse/1993/3", f"/thread/{tid}", f"/m/{uid}",
-                "/search?q=placement", "/timeline", "/about", "/opt-out", "/nope"]:
+    key = one(db, "SELECT root_uid FROM threads LIMIT 1")[0]
+    for url in ["/", "/browse/1993", "/browse/1993/3", f"/t/{key}", f"/m/{uid}",
+                "/search?q=placement", "/timeline", "/about", "/opt-out", "/design", "/nope"]:
         r = client.get(url)
         assert r.headers["X-Robots-Tag"].startswith("noindex"), url
         if r.mimetype == "text/html":
             assert b'name="robots" content="noindex' in r.data, url
     r = client.get("/robots.txt")
     assert r.data == b"User-agent: *\nDisallow: /\n"
+
+
+def test_old_thread_urls_redirect(client, paths):
+    db, _ = paths
+    tid, key = one(db, "SELECT id, root_uid FROM threads LIMIT 1")
+    r = client.get(f"/thread/{tid}")
+    assert r.status_code == 301 and r.headers["Location"].endswith(f"/t/{key}")
+
+
+def test_csp_allows_only_hashed_inline_styles(client):
+    csp = client.get("/").headers["Content-Security-Policy"]
+    assert "script-src 'self'" in csp and "'unsafe-inline'" not in csp
+    assert csp.count("'sha256-") == 2
+
+
+def test_message_citations(client, paths):
+    db, _ = paths
+    uid = one(db, "SELECT uid FROM messages WHERE from_name = 'Rowan Ledger' AND year = 2011")[0]
+    page = client.get(f"/m/{uid}").data.decode()
+    assert "Ledger, Rowan. “Re: Welcome to new CWPA Executive Board members!” WPA-L, 1 July 2011" in page
+    assert "Ledger, R. (2011, July 1). Re: Welcome to new CWPA Executive Board members! [Online forum post]. WPA-L." in page
 
 
 def test_pages_render(client, paths):
@@ -86,20 +107,21 @@ def test_pages_render(client, paths):
 
 def test_suppression_by_name_hides_poster_everywhere(client, paths):
     db, req = paths
-    uid, tid = one(db, "SELECT uid, thread_id FROM messages WHERE from_name = 'Avery Quill' AND year = 1993")
+    uid, key = one(db, "SELECT m.uid, t.root_uid FROM messages m JOIN threads t ON t.id = m.thread_id "
+                       "WHERE m.from_name = 'Avery Quill' AND m.year = 1993")
     before_month = client.get("/browse/1993/3").data
     assert b"Avery Quill" in before_month
     suppress(req, "name", name_key("Avery Quill"))
 
     assert client.get(f"/m/{uid}").status_code == 410
-    t = client.get(f"/thread/{tid}")
+    t = client.get(f"/t/{key}")
     assert b"Avery Quill" not in t.data and b"withdrawn" in t.data
     assert b"Avery Quill" not in client.get("/browse/1993/3").data
     assert b"Avery Quill" not in client.get("/search?q=citing").data
     assert b"Avery Quill" not in client.get("/search?from=Quill").data
+    # Suppressed posters stay in anonymous totals (PLAN.md, decision 1).
     total = one(db, "SELECT COUNT(*) FROM messages")[0]
-    hidden = one(db, "SELECT COUNT(*) FROM messages WHERE name_key = ?", name_key("Avery Quill"))[0]
-    assert f"{total - hidden:,} messages".encode() in client.get("/").data
+    assert f"{total:,} messages".encode() in client.get("/").data
 
 
 def test_suppression_by_poster_key(client, paths):

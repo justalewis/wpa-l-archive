@@ -1,14 +1,24 @@
 {% extends "base.html" %}
 {% block title %}{{ year }} · WPA-L Archive Reader{% endblock %}
-{% block body %}
+{% block content %}
 <p class="crumbs"><a href="{{ url_for('home') }}">All years</a> / {{ year }}</p>
-<h1>{{ year }}</h1>
-<ul class="months">
+<div class="page-head">
+  <h1>{{ year }}</h1>
+  <span class="result-count">{{ "{:,}".format(months|sum(attribute='n')) }} messages</span>
+</div>
+<ol class="entries">
 {% for r in months %}
-  <li><a href="{{ url_for('month_view', year=year, month=r.month) }}">{{ MONTHS[r.month] }}</a>
-      <span class="meta">{{ "{:,}".format(r.n) }} messages in {{ "{:,}".format(r.t) }} threads</span></li>
+  <li class="entry">
+    <div class="entry-title-row">
+      <a class="entry-title" href="{{ url_for('month_view', year=year, month=r.month) }}">{{ MONTHS[r.month] }}</a>
+    </div>
+    <div class="entry-meta"><span>{{ "{:,}".format(r.n) }} messages</span><span>{{ "{:,}".format(r.t) }} threads</span></div>
+  </li>
 {% endfor %}
-</ul>
-<p class="pager">{% if year > 1993 %}<a href="{{ url_for('year_view', year=year-1) }}">← {{ year-1 }}</a>{% endif %}
-{% if year < 2021 %}<a href="{{ url_for('year_view', year=year+1) }}">{{ year+1 }} →</a>{% endif %}</p>
+</ol>
+<nav class="pagination" aria-label="Years">
+  {% if year > 1993 %}<a class="btn-quiet" href="{{ url_for('year_view', year=year-1) }}">&larr; {{ year-1 }}</a>{% else %}<span></span>{% endif %}
+  <span></span>
+  {% if year < 2021 %}<a class="btn-quiet" href="{{ url_for('year_view', year=year+1) }}">{{ year+1 }} &rarr;</a>{% else %}<span></span>{% endif %}
+</nav>
 {% endblock %}
