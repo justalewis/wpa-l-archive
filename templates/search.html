@@ -28,6 +28,25 @@
 {% if error %}<p class="err">{{ error }}</p>{% endif %}
 
 {% if q or who_q %}
+{% if n and 'corpus_create' in url_rules %}
+<details class="methodology-section">
+  <summary class="methodology-summary">{{ ic('ic-data', 'ic-sm ic-quiet') }} Save or export these {{ "{:,}".format(n) }} messages</summary>
+  <div class="methodology-body">
+    <form class="form" method="post" action="{{ url_for('corpus_create') }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+      {% for k, v in filters.as_dict().items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+      <div class="f"><label for="cname">Name this corpus</label><input id="cname" name="name" required maxlength="120"></div>
+      <div class="f"><label for="cdesc">Description (optional)</label><textarea id="cdesc" name="description" rows="2" maxlength="1000"></textarea></div>
+      <button class="btn" type="submit">Save as a corpus</button>
+    </form>
+    <p class="meta">A saved corpus freezes the ids of these messages with today's build and gets a permanent URL. Or download them now:
+      <a href="{{ url_for('export', format='csv', **filters.as_dict()) }}">CSV</a> ·
+      <a href="{{ url_for('export', format='jsonl', **filters.as_dict()) }}">JSONL</a> ·
+      pseudonymized <a href="{{ url_for('export', format='csv', pseudo=1, **filters.as_dict()) }}">CSV</a>.</p>
+  </div>
+</details>
+{% endif %}
 {% block search_tools %}{% endblock %}
 {% if by_year %}
 {% set peak = by_year|map(attribute='n')|max %}

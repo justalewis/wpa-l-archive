@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}Data and export · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Data and export</h1>
+  <p class="placeholder">[Draft placeholder. Working documentation; public wording to come.]</p>
+  <p class="lede">How the archive is built, what an export contains, how to save a search as a citable corpus, and the read-only API.</p>
+</div>
+
+<h2 class="section-head">Provenance</h2>
+<table class="data">
+  <tbody>
+    <tr><th scope="row">Source</th><td class="l">Internet Archive item <code>WPA-L-1993-2021-Complete-Uncompresse</code>, public-domain mark: 341 monthly LISTSERV logs, January 1993 to May 2021, each checked against the item's published MD5.</td></tr>
+    <tr><th scope="row">This build</th><td class="l"><code>{{ build }}</code>{% if meta.stages_at %}; stages re-run {{ meta.stages_at }}{% endif %}</td></tr>
+    <tr><th scope="row">Processing</th><td class="l">Messages split from the logs; email addresses removed everywhere; attachments dropped; threads rebuilt; posters grouped into persons. The build code and its decision files are versioned with the reader.</td></tr>
+  </tbody>
+</table>
+
+<h2 class="section-head">How to cite the archive</h2>
+<p class="cite">WPA-L Archive Reader. Built from <i>WPA-L Archive 1993–2021 Complete Uncompressed</i>, Internet Archive, 2021. Build {{ build }}. {{ url_for('home', _external=True) }}</p>
+<p class="meta">Each message page gives MLA 9 and APA 7 citations for that message. Cite a saved corpus by its URL and the build date shown on it.</p>
+
+<h2 class="section-head" id="fields">{{ ic('ic-data', 'ic-sm ic-quiet') }} Export fields</h2>
+<table class="data">
+  <thead><tr><th scope="col">Field</th><th scope="col" class="l">Meaning</th></tr></thead>
+  <tbody>
+    <tr><td class="l"><code>message_id</code></td><td class="l">Stable 12-hex id; the permalink is <code>/m/{id}</code>. It does not change between builds.</td></tr>
+    <tr><td class="l"><code>thread_id</code></td><td class="l">The id of the thread's first message; the thread page is <code>/t/{id}</code>.</td></tr>
+    <tr><td class="l"><code>poster_id</code></td><td class="l">The person id (addresses and name variants grouped). In a pseudonymized export, a pseudonym.</td></tr>
+    <tr><td class="l"><code>poster_name</code></td><td class="l">The name as posted on this message. In a pseudonymized export, the same pseudonym as <code>poster_id</code>.</td></tr>
+    <tr><td class="l"><code>date_utc</code>, <code>year</code>, <code>month</code></td><td class="l">The Date header in UTC; year and month as filed (the log's month when the header disagrees with it).</td></tr>
+    <tr><td class="l"><code>subject</code>, <code>body</code></td><td class="l">As posted, with addresses removed.</td></tr>
+    <tr><td class="l"><code>body_own_words</code></td><td class="l">The body without quoted text (<code>&gt;</code> lines, forwarded and "Original Message" blocks) or the signature block. Heuristic; see the methodology.</td></tr>
+    <tr><td class="l"><code>permalink</code></td><td class="l">The message's URL in this reader.</td></tr>
+  </tbody>
+</table>
+<p class="meta">Exports and saved corpora are capped at {{ "{:,}".format(export_max) }} messages. Messages withdrawn at a poster's request are never included. Pseudonyms are stable for one corpus or one exact search, so re-downloading gives the same ones, and differ between corpora. Pseudonymization covers the name and id fields only: names inside message text (signatures, "X wrote:" lines) remain.</p>
+
+<h2 class="section-head" id="terms">Terms of use</h2>
+<div class="placeholder">[Draft placeholder: terms wording to be written and reviewed.] Exports are for research and teaching. Don't republish contact details found in messages, honor withdrawals in anything you derive from an export by checking ids against the API before you publish, and cite the archive and the build.</div>
+{% if agreed %}
+<p class="ok-note">You've accepted these terms for this session. Export links on search results and corpus pages will download directly.</p>
+{% else %}
+<form class="form" method="post">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="next" value="{{ next }}">
+  <label><input type="checkbox" name="agree" value="yes" required> I'll use exports under these terms.</label>
+  <button class="btn" type="submit">Continue</button>
+</form>
+{% endif %}
+
+<h2 class="section-head" id="api">API</h2>
+<p>Read-only JSON, versioned under <code>/api/v1/</code>, {{ api_rate }} requests a minute per client, {{ api_page }} results a page. Withdrawn messages and people are absent here too.</p>
+<table class="data">
+  <tbody>
+    <tr><td class="l"><code>GET /api/v1/messages/{id}</code></td><td class="l">One message, with its citations.</td></tr>
+    <tr><td class="l"><code>GET /api/v1/threads/{id}</code></td><td class="l">A thread and its messages.</td></tr>
+    <tr><td class="l"><code>GET /api/v1/search?q=&amp;from=&amp;start=&amp;end=&amp;fresh=1&amp;page=</code></td><td class="l">The search page's filters; <code>fresh=1</code> matches own words only. Includes a <code>next</code> link.</td></tr>
+    <tr><td class="l"><code>GET /api/v1/corpus/{id}</code></td><td class="l">A saved corpus: its query, build, frozen ids, and a page of messages.</td></tr>
+    <tr><td class="l"><code>GET /api/v1/posters/{id}</code></td><td class="l">A person with a public page: names as posted, activity, affiliations.</td></tr>
+  </tbody>
+</table>
+{% endblock %}

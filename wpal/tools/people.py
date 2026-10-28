@@ -16,7 +16,7 @@ EDGE_MIN = 3  # ethics threshold for showing a pair of people (PLAN.md decision 
 
 
 def register(app) -> None:
-    app.nav.insert(3, NavItem("people", "People", "people", "ic-person"))
+    app.nav.append(NavItem("people", "People", "people", "ic-person", 50))
 
     def has_persons():
         def check():

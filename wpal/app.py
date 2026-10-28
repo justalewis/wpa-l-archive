@@ -39,15 +39,16 @@ class NavItem:
     label: str
     endpoint: str
     icon: str
+    order: int = 50  # position in the capsa; core pages are 10, 20, ...
 
 
 # Destinations in the capsa, in order. Features add themselves here.
 NAV = [
-    NavItem("browse", "Browse", "home", "ic-browse"),
-    NavItem("search", "Search", "search", "ic-search"),
-    NavItem("timeline", "Timeline", "timeline", "ic-timeline"),
-    NavItem("about", "About", "about", "ic-about"),
-    NavItem("optout", "Opt out", "opt_out", "ic-optout"),
+    NavItem("browse", "Browse", "home", "ic-browse", 10),
+    NavItem("search", "Search", "search", "ic-search", 20),
+    NavItem("timeline", "Timeline", "timeline", "ic-timeline", 30),
+    NavItem("about", "About", "about", "ic-about", 90),
+    NavItem("optout", "Opt out", "opt_out", "ic-optout", 99),
 ]
 
 
@@ -73,8 +74,14 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
             c[key] = fn()
         return c[key]
 
+    def csrf_ok() -> bool:
+        """The form's token matches this session's. Both must be present."""
+        sent, held = request.form.get("csrf"), session.get("csrf")
+        return bool(sent and held and secrets.compare_digest(sent, held))
+
     app.con = con
     app.cached = cached
+    app.csrf_ok = csrf_ok
     app.nav = list(NAV)  # tools insert their destinations into this copy
     # Features add context to core pages through these hooks (wpal/features.py).
     app.hooks = {"thread": [], "message": [], "search": [], "timeline": []}
@@ -152,7 +159,8 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
         return {
             "MONTHS": MONTHS,
             "csrf": session["csrf"],
-            "nav_items": app.nav,
+            "nav_items": sorted(app.nav, key=lambda i: i.order),
+            "url_rules": app.view_functions,
             "capsa_years": years,
             "asset_v": asset_v,
             "public_persons": public_persons(),
@@ -333,7 +341,7 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
                     ("name_as_posted", "other_names", "example_links", "contact", "relationship", "note")}
             if request.form.get("website"):  # honeypot
                 return redirect(url_for("opt_out_thanks"))
-            if request.form.get("csrf") != session.get("csrf"):
+            if not csrf_ok():
                 errors.append("The form expired. Please send it again.")
             if not form["name_as_posted"]:
                 errors.append("Give the name your messages were posted under.")
