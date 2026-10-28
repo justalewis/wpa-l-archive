@@ -1240,3 +1240,10 @@ table.data thead th { color: var(--dilute); font-weight: 600; }
 .chart .node-label { font-size: 11px; fill: var(--chart-ink); paint-order: stroke; stroke: var(--chart-surface); stroke-width: 3px; pointer-events: none; }
 .conc-chart text { font-size: 13px; }
 .trace { width: 100%; max-width: 20rem; height: 2rem; display: block; margin-top: var(--space-1); }
+
+/* Topic small multiples: one shared scale, one hue. */
+.topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-3); }
+.topic-cell { display: grid; gap: var(--space-1); padding: var(--space-3); border: 1px solid var(--rule);
+  background: var(--paper); color: var(--gloss); text-decoration: none; font: var(--text-sm)/1.35 var(--f-ui); }
+.topic-cell:hover { border-color: var(--terracotta); }
+.topic-cell svg { width: 100%; height: 2.5rem; }

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}{{ t.label }} · Topics · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('topics') }}">{{ ic('ic-topics', 'ic-sm ic-quiet') }} Topics</a></p>
+<div class="page-head">
+  <h1>{{ t.label }}</h1>
+  <p class="lede">{{ "{:,}".format(t.n_threads) }} threads; most prominent in {{ t.peak_year }}. {% if t.labeled_by == "auto" %}This label is the model's top words; it has not been named by a person.{% else %}Named by {{ t.labeled_by }}.{% endif %}</p>
+</div>
+<p class="meta">Words: {% for w in terms %}{{ w.term }}{{ ", " if not loop.last }}{% endfor %}</p>
+<figure class="viz chart hist">
+  <figcaption class="meta">Share of each year's threads in this topic</figcaption>
+  <svg viewBox="0 0 406 66" role="img" aria-label="Bar chart of this topic's share of threads by year">
+  {% for y in range(1993, 2022) %}{% set v = s.get(y, 0) %}{% set h = (v / peak * 50)|round(1) %}
+    <g data-tip-title="{{ y }}" data-tip="{{ '%.1f'|format(v * 100) }}% of threads"><rect class="hit" x="{{ (y - 1993) * 14 }}" y="0" width="14" height="54"></rect>
+    {% if v %}<rect class="bar" x="{{ (y - 1993) * 14 + 2 }}" y="{{ 54 - h }}" width="10" height="{{ h }}" rx="2"></rect>{% endif %}</g>
+  {% endfor %}
+    <line class="base" x1="0" x2="406" y1="54" y2="54"></line><text x="0" y="65">1993</text><text x="406" y="65" text-anchor="end">2021</text>
+  </svg>
+</figure>
+<h2 class="section-head">Threads</h2>
+<ol class="entries">
+{% for th in threads %}
+  <li class="entry">
+    <div class="entry-meta"><span class="entry-date">{{ th.started_at|when("%b %Y") }}</span><span>{{ th.n_messages }} messages</span>{% if th.representative %}<span>representative</span>{% endif %}</div>
+    <div class="entry-title-row"><a class="entry-title" href="{{ url_for('thread', key=th.root_uid) }}">{{ th.subject }}</a></div>
+  </li>
+{% endfor %}
+</ol>
+<p class="meta">Topic key <code>{{ t.topic_key }}</code> (its most representative thread), stable across refits while that thread stays representative.</p>
+{% endblock %}

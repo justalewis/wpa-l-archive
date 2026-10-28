@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}{{ i.name }} · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('institutions') }}">{{ ic('ic-institution', 'ic-sm ic-quiet') }} Institutions</a></p>
+<div class="page-head">
+  <h1>{{ i.name }}</h1>
+  <p class="lede">{{ i.city }}, {{ i.state }} · {{ i.carnegie_type }}. {{ "{:,}".format(per_year.values()|sum) }} messages from people whose signatures named it, {{ n_people }} {{ "person" if n_people == 1 else "people" }} in all.</p>
+</div>
+<figure class="viz chart hist">
+  <figcaption class="meta">Messages per year from affiliated posters</figcaption>
+  <svg viewBox="0 0 406 66" role="img" aria-label="Bar chart of messages per year">
+  {% for y in range(1993, 2022) %}{% set n = per_year.get(y, 0) %}{% set h = (n / peak * 50)|round(1) %}
+    <g data-tip-title="{{ y }}" data-tip="{{ n }} messages"><rect class="hit" x="{{ (y - 1993) * 14 }}" y="0" width="14" height="54"></rect>
+    {% if n %}<rect class="bar" x="{{ (y - 1993) * 14 + 2 }}" y="{{ 54 - h }}" width="10" height="{{ h }}" rx="2"></rect>{% endif %}</g>
+  {% endfor %}
+    <line class="base" x1="0" x2="406" y1="54" y2="54"></line><text x="0" y="65">1993</text><text x="406" y="65" text-anchor="end">2021</text>
+  </svg>
+</figure>
+<h2 class="section-head">{{ ic('ic-person', 'ic-sm ic-quiet') }} People</h2>
+{% if people %}
+<table class="data"><thead><tr><th scope="col">Person</th><th scope="col">From</th><th scope="col">To</th></tr></thead>
+<tbody>{% for p in people %}<tr><td class="l"><a href="{{ url_for('person', pid=p.person_id) }}">{{ p.display_name }}</a></td><td>{{ p.first_at|when("%Y") }}</td><td>{{ p.last_at|when("%Y") }}</td></tr>{% endfor %}</tbody></table>
+{% endif %}
+{% if n_people > people|length %}<p class="meta">{{ n_people - people|length }} more {{ "person is" if n_people - people|length == 1 else "people are" }} counted but not named: fewer than 25 messages, or withdrawn.</p>{% endif %}
+{% if jobs %}
+<h2 class="section-head">{{ ic('ic-job', 'ic-sm ic-quiet') }} Job ads</h2>
+<ol class="entries">{% for j in jobs %}<li class="entry"><div class="entry-meta"><span class="entry-date">{{ j.posted_at|when("%d %b %Y") }}</span><span>{{ j.rank_type }}</span></div>
+<div class="entry-title-row"><a class="entry-title" href="{{ url_for('message', uid=j.uid) }}">{{ j.title }}</a></div></li>{% endfor %}</ol>
+{% endif %}
+<p class="meta">Signatures matched here as: {{ names|join("; ") }}.</p>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ic with context %}
+{% block title %}Institutions · WPA-L Archive Reader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Institutions</h1>
+  <p class="lede">Which campuses the list's voices came from, judged by the institutions in posters' signatures: how present two-year colleges were next to research universities, era by era.</p>
+</div>
+
+<h2 class="section-head">Share of messages by Carnegie type</h2>
+{% set W = 1000 %}{% set X0 = 40 %}{% set BW = ((W - X0 - 10) / 29)|round(1) %}{% set H = 240 %}{% set TOP = 10 %}
+<figure class="viz chart genre-chart">
+  <svg viewBox="0 0 {{ W }} {{ H + 40 }}" role="img" aria-label="Stacked bars: share of messages with a known affiliation by Carnegie type, per year">
+    {% for f in [0.25, 0.5, 0.75, 1.0] %}{% set gy = TOP + H - f * H %}<line class="grid" x1="{{ X0 }}" x2="{{ W - 10 }}" y1="{{ gy }}" y2="{{ gy }}"></line><text x="{{ X0 - 6 }}" y="{{ gy + 4 }}" text-anchor="end">{{ (f * 100)|int }}%</text>{% endfor %}
+    {% for y, sh in shares.items() %}{% set x = X0 + (y - 1993) * BW %}{% set ns = namespace(acc=0) %}
+      {% for t in types %}{% set h = sh[t] * H %}{% if h > 0 %}
+        <rect class="seg g-{{ loop.index if loop.index <= 8 else 9 }}" x="{{ x + 1 }}" y="{{ (TOP + H - ns.acc - h)|round(1) }}" width="{{ BW - 2 }}" height="{{ h|round(1) }}"
+          data-tip-title="{{ t }} · {{ y }}" data-tip="{{ '%.1f'|format(sh[t] * 100) }}% of messages with a known affiliation ({{ '{:,}'.format(years[y].get(t, 0)) }})"></rect>
+      {% endif %}{% set ns.acc = ns.acc + h %}{% endfor %}
+    {% endfor %}
+    <line class="base" x1="{{ X0 }}" x2="{{ W - 10 }}" y1="{{ TOP + H }}" y2="{{ TOP + H }}"></line>
+    {% for y in range(1993, 2022, 4) %}<text x="{{ X0 + (y - 1993) * BW + BW / 2 }}" y="{{ TOP + H + 18 }}" text-anchor="middle">{{ y }}</text>{% endfor %}
+  </svg>
+  <div class="viz-legend">{% for t in types %}<span class="key"><span class="swatch sw-{{ 'cat-' ~ loop.index if loop.index <= 8 else 'cat-other' }}"></span>{{ t }}</span>{% endfor %}</div>
+  <p class="viz-note">Among messages whose poster had a matched affiliation at the time. That is {% set ks = known.values()|list %}{{ '%.0f'|format((ks|min) * 100) }}–{{ '%.0f'|format((ks|max) * 100) }}% of a year's messages; the rest come from people whose signatures name no matched institution.</p>
+</figure>
+
+<form class="viz-controls" method="get">
+  <label for="era">Era</label>
+  <select id="era" name="era">{% for e in eras %}<option {{ "selected" if e == era }}>{{ e }}</option>{% endfor %}</select>
+  <button class="btn" type="submit">Show</button>
+</form>
+{% if points.points %}
+<figure class="viz chart">
+  <svg viewBox="0 0 {{ points.W }} {{ points.H }}" role="img" aria-label="Dot map of institutions by messages from affiliated posters, {{ era }}">
+    {% for p in points.points %}<a href="{{ url_for('institution', unitid=p.unitid) }}"><circle class="node named" cx="{{ p.x }}" cy="{{ p.y }}" r="{{ p.r }}" data-tip-title="{{ p.name }}" data-tip="{{ p.posts }} messages, {{ era }} · {{ p.type }}"></circle></a>{% endfor %}
+  </svg>
+  <p class="viz-note">Contiguous United States, placed by latitude and longitude (no base map); dot area follows messages from people affiliated there in {{ era }}. Institutions elsewhere are in the table.</p>
+</figure>
+{% endif %}
+
+<h2 class="section-head">Most present, {{ era }}</h2>
+<table class="data">
+  <thead><tr><th scope="col">Institution</th><th scope="col" class="l">Type</th><th scope="col">State</th><th scope="col">Messages</th><th scope="col">People</th></tr></thead>
+  <tbody>{% for r in top %}<tr><td class="l"><a href="{{ url_for('institution', unitid=r.unitid) }}">{{ r.name }}</a></td><td class="l">{{ r.carnegie_type }}</td><td>{{ r.state }}</td><td>{{ r.posts }}</td><td>{{ r.people }}</td></tr>{% endfor %}</tbody>
+</table>
+
+<h2 class="section-head">{{ ic('ic-redpen', 'ic-sm ic-quiet') }} Not yet matched ({{ "{:,}".format(n_unmatched) }})</h2>
+<p class="meta">Institution names from signatures and job ads that matched no IPEDS institution, or more than one. Closed and renamed schools land here, as do generic names. The most frequent:</p>
+<table class="data"><tbody>{% for u in unmatched %}<tr><td class="l">{{ u.name }}</td><td>{{ u.n }}</td><td class="l meta">{{ u.sources }}</td></tr>{% endfor %}</tbody></table>
+
+<details class="methodology-section">
+  <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} Methodology</summary>
+  <div class="methodology-body">
+    <p>Names are matched to the 2022 IPEDS directory (NCES): first by a reviewed decision, then exactly on a normalized name or IPEDS alias, then by a fuzzy match accepted only when a single institution contains every word of the name. Carnegie types are the 2021 basic classification in eight groups. A message counts toward an institution when its author's signatures name that institution in the period the message falls in. Signatures under-represent part-time and contingent faculty, who are less likely to sign with an institution, so these shares describe the visible, signed voices on the list.</p>
+  </div>
+</details>
+{% endblock %}

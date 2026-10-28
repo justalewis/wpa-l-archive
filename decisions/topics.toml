@@ -1,0 +1,26 @@
+# Pinned configuration for the topic model (item 5). Changing anything here
+# changes the model; the run records this file's contents, the library
+# versions, and the seed on the /topics page.
+
+version = 1
+seed = 1993
+embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
+
+# Documents: one per thread, the subject plus its messages' own words
+# (quoted text and signatures removed), truncated per thread.
+min_doc_chars = 300
+max_doc_chars = 4000
+
+# BERTopic / UMAP / HDBSCAN
+umap_neighbors = 15
+umap_components = 5
+min_cluster_size = 60
+min_samples = 20
+top_n_words = 10
+reduce_to = 60          # merge down to at most this many topics ("auto" not used, for stability)
+
+# Words to keep out of topic labels: list furniture, not subject matter.
+extra_stopwords = ["wpa", "list", "thanks", "thank", "best", "regards", "hi", "hello", "dear", "colleagues",
+                   "folks", "just", "like", "know", "think", "really", "would", "could", "also", "one",
+                   "dr", "university", "college", "edu", "http", "https", "www", "com", "org", "re", "fwd",
+                   "address", "removed", "sent", "wrote", "message", "email", "mail", "please", "best wishes"]
