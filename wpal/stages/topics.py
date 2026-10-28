@@ -127,6 +127,7 @@ def run(db, ctx) -> None:
 
     labels = _load_labels(ctx)
     month_threads = collections.Counter(when)
+    year_threads = collections.Counter(y for y, _ in when)
     rows_t, rows_terms, rows_m, rows_th = [], [], [], []
     for _, r in info.iterrows():
         t = int(r["Topic"])
@@ -143,7 +144,11 @@ def run(db, ctx) -> None:
                 break
         members = [i for i, x in enumerate(topics) if x == t]
         per = collections.Counter(when[i] for i in members)
-        peak = max(per.items(), key=lambda kv: kv[1] / month_threads[kv[0]])[0][0] if per else None
+        # Peak by yearly share: a month's share is noisy where months are small (1993-94).
+        by_year = collections.Counter()
+        for (y, _m), n in per.items():
+            by_year[y] += n
+        peak = max(by_year, key=lambda y: by_year[y] / year_threads[y]) if by_year else None
         rows_t.append((tkey, t, label, auto, by, len(members), peak))
         rows_terms += [(tkey, i + 1, w, float(s)) for i, (w, s) in enumerate(terms)]
         rows_m += [(tkey, y, m, n, n / month_threads[(y, m)]) for (y, m), n in per.items()]

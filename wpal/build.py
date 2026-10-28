@@ -35,6 +35,7 @@ INDEXES = """
 CREATE INDEX IF NOT EXISTS messages_cover
     ON messages(year, month, sent_at, thread_id, poster_key, name_key, person_id, from_name);
 CREATE INDEX IF NOT EXISTS messages_parent ON messages(parent_uid, sent_at);
+CREATE INDEX IF NOT EXISTS messages_sent ON messages(sent_at);
 """
 
 SCHEMA = """

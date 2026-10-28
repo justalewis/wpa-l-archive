@@ -39,7 +39,7 @@
 <details class="methodology-section">
   <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} Methodology</summary>
   <div class="methodology-body">
-    <p>Only a poster's own words are read; quoted text is skipped so a reference repeated down a thread counts once. A DOI is matched exactly. A title in quotation marks or underscores (four words or more) is matched to a Pinakes title or main title, ignoring case and punctuation. “Author (year)” references are matched only when a single Pinakes work fits, and wait in a review queue. Pinakes indexes journal articles, so books, chapters and websites the list discussed are not matched here. Scholar names are Pinakes authors with three or more indexed works, named in full in a message they did not write.</p>
+    <p>Only a poster's own words are read; quoted text is skipped so a reference repeated down a thread counts once. A DOI is matched exactly. A title in quotation marks or underscores (four words or more) is matched to a Pinakes title or main title, ignoring case and punctuation. “Author (year)” references are matched only when a single Pinakes work fits, and wait in a review queue. Pinakes indexes journal articles, so books, chapters and websites the list discussed are not matched here, with one exception to watch for: when a journal reviewed a book under the book's own title, a mention of the book can match the review. Scholar names are Pinakes authors with three or more indexed works, named in full in a message they did not write.</p>
     <p>Matches: {% for k, v in totals.items() %}{{ k }} {{ "{:,}".format(v) }}{{ ", " if not loop.last }}{% endfor %}. Corrections are recorded in the build's decision files.</p>
   </div>
 </details>

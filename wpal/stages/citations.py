@@ -5,9 +5,11 @@ down a chain of replies counts once) and finds:
 
   doi         a DOI, matched exactly to a Pinakes work            (accepted)
   title       a quoted or italicized title of 4+ words, matched
-              exactly (normalized) to a Pinakes title or main title
-              before its colon; unique match                       (accepted)
-              shared by several works                              (review)
+              exactly (normalized) to a Pinakes title; unique, full
+              title, written in title case                         (accepted)
+              matching only a main title before its colon (often a
+              journal's review of a book by that name), several
+              works, or a lower-case stock phrase                  (review)
   author-year "Surname (2004)", "(Surname, 2004)", "Surname 2004";
               matched when exactly one Pinakes work has an author
               with that surname in that year                       (review)
@@ -118,10 +120,17 @@ def run(db, ctx) -> None:
             nt = norm_title(raw)
             if len(nt.split()) < 4:
                 continue
-            hits = by_title.get(nt) or by_main.get(nt) or by_main.get(norm_title(re.split(r"[:?]", raw)[0]))
+            full = by_title.get(nt)
+            hits = full or by_main.get(nt) or by_main.get(norm_title(re.split(r"[:?]", raw)[0]))
             if hits:
                 wid = min(hits)
-                found.add(("title", raw, wid, 0.95 if len(hits) == 1 else 0.6))
+                # Accept only a unique, full-title match written like a title. A
+                # main-title-only match is often a journal's review of a book of
+                # that name, and a lower-case quotation is usually a stock phrase.
+                words = [w for w in re.findall(r"[A-Za-z][\w'-]*", raw) if len(w) > 3]
+                titled = bool(words) and sum(w[0].isupper() for w in words) / len(words) >= 0.6
+                conf = 0.95 if (full and len(hits) == 1 and titled) else 0.6
+                found.add(("title", raw, wid, conf))
         for m in AUTHOR_YEAR.finditer(text):
             surname, yr = m.group(1), int(m.group(2))
             if surname in STOP_SURNAMES:

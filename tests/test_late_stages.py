@@ -41,6 +41,8 @@ def test_citation_matching(tmp_path):
     db = make_db(tmp_path, [
         ("a", 2005, "", "See doi 10.1234/ccc.2004.1 for the argument.", "Jo Doe"),
         ("b", 2006, "", 'Everyone should reread "Made Not Only in Words" this term.', "Jo Doe"),
+        ("e", 2009, "", 'Assign "The Erasure of the Sentence" first.', "Jo Doe"),
+        ("f", 2009, "", 'we keep saying "the erasure of the sentence" around here.', "Jo Doe"),
         ("c", 2007, "", "As Connors (2000) argued, the sentence vanished. Robert Connors said so.", "Jo Doe"),
         ("d", 2008, "> quoted 10.1234/ccc.2004.1", "", "Jo Doe"),
     ])
@@ -49,10 +51,12 @@ def test_citation_matching(tmp_path):
     citations.run(db, Context(decisions=dec, reference=tmp_path / "ref"))
     rows = db.execute("SELECT uid, kind, work_id, status FROM mentions ORDER BY uid").fetchall()
     assert ("a", "doi", 1, "accepted") in rows
-    assert ("b", "title", 1, "accepted") in rows
+    assert ("b", "title", 1, "review") in rows     # main title only: could be a review of the book
+    assert ("e", "title", 2, "accepted") in rows   # full title, written as a title
+    assert ("f", "title", 2, "review") in rows     # same words in lower case
     assert ("c", "author-year", 2, "review") in rows
     assert not any(r[0] == "d" for r in rows)  # quoted text is not the poster's own words
-    assert db.execute("SELECT n_messages, first_year FROM cited_works WHERE work_id = 1").fetchone() == (2, 2005)
+    assert db.execute("SELECT n_messages, first_year FROM cited_works WHERE work_id = 1").fetchone() == (1, 2005)
     assert db.execute("SELECT name FROM scholar_mentions WHERE uid = 'c'").fetchone() == ("Robert Connors",)
 
 
