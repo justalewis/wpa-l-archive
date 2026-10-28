@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import csv
 import json
 import os
 import re
@@ -25,7 +26,7 @@ from pathlib import Path
 
 from . import stages
 from .parse import parse_file
-from .threads import build_threads
+from .threads import apply_overrides, build_threads
 
 # Covering indexes for the reader. Every query passes through the `visible`
 # view, which needs poster_key and name_key; without these, counting messages
@@ -43,6 +44,7 @@ CREATE TABLE messages (
     thread_id INTEGER,
     parent_uid TEXT,
     thread_method TEXT,
+    link_method TEXT,       -- how the reply edge to parent_uid was found (item 3)
     sent_at TEXT,           -- ISO 8601, UTC; NULL when the Date header failed
     year INTEGER NOT NULL,
     month INTEGER NOT NULL,
@@ -77,6 +79,7 @@ CREATE TABLE threads (
 );
 CREATE INDEX threads_ym ON threads(year, month, started_at);
 CREATE UNIQUE INDEX threads_root ON threads(root_uid);
+CREATE TABLE thread_redirects (old_key TEXT PRIMARY KEY, new_key TEXT NOT NULL);
 
 CREATE VIRTUAL TABLE messages_fts USING fts5(
     subject, body, content='messages', content_rowid='id',
@@ -100,6 +103,14 @@ def load_salt(path: Path) -> bytes:
     salt = secrets.token_bytes(32)
     path.write_bytes(salt)
     return salt
+
+
+def read_csv(path: Path) -> list[dict]:
+    """Rows of a decisions/ file; '#' in the first column comments a row out."""
+    if not path.exists():
+        return []
+    with open(path, newline="", encoding="utf-8") as fh:
+        return [r for r in csv.DictReader(fh) if not (next(iter(r.values()), "") or "").startswith("#")]
 
 
 def _work(args):
@@ -208,11 +219,16 @@ def main(argv=None):
     names_by_addr.clear()
 
     tr = build_threads(light)
+    overrides = read_csv(Path(a.decisions) / "thread_overrides.csv")
+    when = {m.uid: (m.date.isoformat() if m.date else "9999", m.source_file, m.ordinal) for m in light}
+    for problem in apply_overrides(tr, overrides, when):
+        print(f"  thread override skipped: {problem}")
     db.executemany(
-        "UPDATE messages SET from_name=?, name_key=?, thread_id=?, parent_uid=?, thread_method=? WHERE uid=?",
+        "UPDATE messages SET from_name=?, name_key=?, thread_id=?, parent_uid=?, thread_method=?, link_method=? WHERE uid=?",
         [(m.from_name, name_key(m.from_name), tr.thread_of[m.uid], tr.parent_of[m.uid],
-          tr.method_of[m.uid], m.uid) for m in light],
+          tr.method_of[m.uid], tr.link_of[m.uid], m.uid) for m in light],
     )
+    db.executemany("INSERT OR REPLACE INTO thread_redirects VALUES (?, ?)", tr.redirects.items())
     subj = {m.uid: m.subject for m in light}
     db.executemany(
         "INSERT INTO threads (id, root_uid, subject, n_messages) VALUES (?,?,?,?)",

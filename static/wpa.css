@@ -1216,3 +1216,5 @@ table.data thead th { color: var(--dilute); font-weight: 600; }
 .chart .event-line:hover { stroke-width: 3; }
 .toggle-row { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute); display: flex; gap: var(--space-3); flex-wrap: wrap; }
 .trends-chart text { font-size: 16px; }
+.confidence.conf-low .ic { --ic-accent: var(--terracotta); }
+.confidence.conf-medium .ic { color: var(--dilute); }
