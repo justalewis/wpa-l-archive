@@ -75,6 +75,7 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
 
     app.con = con
     app.cached = cached
+    app.nav = list(NAV)  # tools insert their destinations into this copy
     # Features add context to core pages through these hooks (wpal/features.py).
     app.hooks = {"thread": [], "message": [], "search": [], "timeline": []}
 
@@ -151,7 +152,7 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
         return {
             "MONTHS": MONTHS,
             "csrf": session["csrf"],
-            "nav_items": NAV,
+            "nav_items": app.nav,
             "capsa_years": years,
             "asset_v": asset_v,
             "public_persons": public_persons(),
@@ -167,7 +168,7 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
         base = cached("public_persons", load)
         if not base:
             return base
-        hidden = {r[0] for r in con().execute("SELECT key FROM req.suppression WHERE kind = 'person'")}
+        hidden = {r[0] for r in con().execute("SELECT pid FROM temp.hidden_persons")}
         return base - hidden
 
     app.public_persons = public_persons
