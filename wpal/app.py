@@ -316,12 +316,16 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
             except Exception:
                 error = "That search could not be read. Try plain words, or put a phrase in double quotes."
 
-        def page_url(p):
-            return url_for("search") + "?" + urlencode({**f.as_dict(), "page": p})
+        def page_url(p, norm=None):
+            extra = {"page": p} if p > 1 else {}
+            if norm:
+                extra["norm"] = 1
+            return url_for("search") + "?" + urlencode({**f.as_dict(), **extra})
 
         return render_template("search.html", q=f.q, who_q=f.who, start=f.start, end=f.end, filters=f,
                                results=results[:PAGE], more=len(results) > PAGE, page=page, by_year=by_year,
-                               n=n, error=error, page_url=page_url, active_nav="search", **extras("search", f, by_year))
+                               n=n, error=error, page_url=page_url,
+                               by_year_counts={r["year"]: r["n"] for r in by_year}, active_nav="search", **extras("search", f, by_year))
 
 
     @app.route("/timeline")
