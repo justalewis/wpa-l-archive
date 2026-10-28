@@ -26,6 +26,8 @@ import collections
 import csv
 import re
 
+from .network import ERAS
+
 CARNEGIE = [  # (lowest code, highest code, group)
     (1, 14, "Associate's (two-year)"), (15, 15, "Doctoral: very high research"), (16, 16, "Doctoral: high research"),
     (17, 17, "Doctoral/professional"), (18, 20, "Master's"), (21, 23, "Baccalaureate"), (24, 32, "Special focus"),
@@ -59,6 +61,7 @@ def run(db, ctx) -> None:
         DROP TABLE IF EXISTS person_institutions;
         DROP TABLE IF EXISTS unmatched_institutions;
         DROP TABLE IF EXISTS post_carnegie;
+        DROP TABLE IF EXISTS institution_era;
         CREATE TABLE institutions (unitid INTEGER PRIMARY KEY, name TEXT, city TEXT, state TEXT, carnegie_code INTEGER,
                                    carnegie_type TEXT, lat REAL, lon REAL);
         CREATE TABLE institution_aliases (name TEXT PRIMARY KEY, unitid INTEGER, method TEXT, confidence REAL);
@@ -66,6 +69,7 @@ def run(db, ctx) -> None:
         CREATE INDEX person_institutions_u ON person_institutions(unitid);
         CREATE TABLE unmatched_institutions (name TEXT PRIMARY KEY, n INTEGER, sources TEXT);
         CREATE TABLE post_carnegie (year INTEGER, carnegie_type TEXT, posts INTEGER, PRIMARY KEY (year, carnegie_type));
+        CREATE TABLE institution_era (era TEXT, unitid INTEGER, posts INTEGER, people INTEGER, PRIMARY KEY (era, unitid));
     """)
     if not path.exists():
         ctx.note(f"institutions: skipped ({path} not found)")
@@ -147,11 +151,18 @@ def run(db, ctx) -> None:
 
     ctype = {u: ipeds[u][4] for u in used if u in ipeds}
     counts = collections.Counter()
+    era_posts, era_people = collections.Counter(), collections.defaultdict(set)
     for year, pid, sent in db.execute("SELECT year, person_id, sent_at FROM messages"):
         best = None
         for u, f, l, n in spans.get(pid, ()):
             if sent and f[:10] <= sent[:10] <= l[:10] and (best is None or n > best[1]):
                 best = (u, n)
         counts[(year, ctype.get(best[0], "Not classified") if best else "Unknown")] += 1
+        era = next((f"{a}–{b}" for a, b in ERAS if year and a <= year <= b), None)
+        if best and era:  # the page's per-era ranking, precomputed: the join is too slow per request
+            era_posts[(era, best[0])] += 1
+            era_people[(era, best[0])].add(pid)
     db.executemany("INSERT INTO post_carnegie VALUES (?,?,?)", [(y, t, n) for (y, t), n in counts.items()])
+    db.executemany("INSERT INTO institution_era VALUES (?,?,?,?)",
+                   [(e, u, n, len(era_people[(e, u)])) for (e, u), n in era_posts.items()])
     ctx.note(f"institutions: {len(match):,} names matched to {len(used):,} IPEDS units; {len(unmatched):,} unmatched")

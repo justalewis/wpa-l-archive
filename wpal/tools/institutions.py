@@ -15,7 +15,7 @@ def register(app) -> None:
 
     def ready():
         return app.cached("has_inst", lambda: bool(app.con().execute(
-            "SELECT 1 FROM sqlite_master WHERE name = 'post_carnegie'").fetchone()))
+            "SELECT 1 FROM sqlite_master WHERE name = 'institution_era'").fetchone()))
 
     @app.route("/institutions")
     def institutions():
@@ -25,7 +25,6 @@ def register(app) -> None:
         eras = [(a, b) for a, b in ERAS]
         label = [f"{a}–{b}" for a, b in eras]
         era = request.args.get("era") if request.args.get("era") in label else label[2]
-        a, b = eras[label.index(era)]
         rows = con.execute("SELECT year, carnegie_type, posts FROM post_carnegie ORDER BY year").fetchall()
         years = {}
         for r in rows:
@@ -35,12 +34,9 @@ def register(app) -> None:
         known = {y: sum(v.get(t, 0) for t in types) / max(1, sum(v.values())) for y, v in years.items()}
         # Top institutions in the era, by posts from affiliated people (aggregate: no names).
         top = con.execute("""
-            SELECT i.unitid, i.name, i.state, i.carnegie_type, i.lat, i.lon, COUNT(*) posts,
-                   COUNT(DISTINCT m.person_id) people
-            FROM main.messages m JOIN person_institutions pi ON pi.person_id = m.person_id
-            JOIN institutions i ON i.unitid = pi.unitid
-            WHERE m.year BETWEEN ? AND ? AND substr(m.sent_at, 1, 10) BETWEEN substr(pi.first_at, 1, 10) AND substr(pi.last_at, 1, 10)
-            GROUP BY i.unitid ORDER BY posts DESC""", (a, b)).fetchall()
+            SELECT i.unitid, i.name, i.state, i.carnegie_type, i.lat, i.lon, e.posts, e.people
+            FROM institution_era e JOIN institutions i ON i.unitid = e.unitid
+            WHERE e.era = ? ORDER BY e.posts DESC""", (era,)).fetchall()
         points = _project([r for r in top if r["lat"] and r["lon"]])
         unmatched = con.execute("SELECT * FROM unmatched_institutions ORDER BY n DESC LIMIT 40").fetchall()
         n_unmatched = con.execute("SELECT COUNT(*) FROM unmatched_institutions").fetchone()[0]
