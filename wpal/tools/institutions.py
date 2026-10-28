@@ -58,7 +58,7 @@ def register(app) -> None:
             WHERE pi.unitid = ? ORDER BY pi.first_at""", (unitid,)) if r["person_id"] in pub]
         n_people = con.execute("SELECT COUNT(*) FROM person_institutions WHERE unitid = ?", (unitid,)).fetchone()[0]
         names = [r[0] for r in con.execute("SELECT name FROM institution_aliases WHERE unitid = ?", (unitid,))]
-        jobs = con.execute("SELECT j.*, v.subject FROM jobs j JOIN visible v ON v.uid = j.uid WHERE j.unitid = ? "
+        jobs = con.execute("SELECT j.*, v.subject FROM jobs j CROSS JOIN visible v ON v.uid = j.uid WHERE j.unitid = ? "
                            "ORDER BY j.posted_at", (unitid,)).fetchall()
         per_year = dict(con.execute("""
             SELECT m.year, COUNT(*) FROM main.messages m JOIN person_institutions pi ON pi.person_id = m.person_id
