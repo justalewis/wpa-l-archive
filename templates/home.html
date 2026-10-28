@@ -2,7 +2,7 @@
 {% block content %}
 <div class="page-head">
   <h1>WPA-L, 1993–2021</h1>
-  <p class="lede">{{ "{:,}".format(total) }} messages from the Writing Program Administration list, by year and month. Each cell gives that month's count; follow a year or a month to read its threads.</p>
+  <p class="lede">Every message the Writing Program Administration list carried between January 1993 and May 2021, {{ "{:,}".format(total) }} in all, laid out by year and month. Each number is that month's count. Pick a year to see its months, or pick a month to start reading its threads.</p>
 </div>
 
 <div class="sift">
@@ -31,5 +31,5 @@
   </tbody>
 </table>
 </div>
-<p class="meta">Shading runs from the lightest wash (fewest messages) to full clay (the busiest month, {{ "{:,}".format(peak) }}). A dash marks a month with none.</p>
+<p class="meta">Darker cells were busier months, and the darkest one, at {{ "{:,}".format(peak) }} messages, is the busiest month on record. A dash means the archive has nothing from that month.</p>
 {% endblock %}

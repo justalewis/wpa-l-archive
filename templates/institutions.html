@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Institutions</h1>
-  <p class="lede">Which campuses the list's voices came from, judged by the institutions in posters' signatures: how present two-year colleges were next to research universities, era by era.</p>
+  <p class="lede">Which campuses the list's voices came from, going by the institutions people named in their signatures, and how present two-year colleges were next to research universities from one era to the next.</p>
 </div>
 
 <h2 class="section-head">Share of messages by Carnegie type</h2>
@@ -22,7 +22,7 @@
     {% for y in range(1993, 2022, 4) %}<text x="{{ X0 + (y - 1993) * BW + BW / 2 }}" y="{{ TOP + H + 18 }}" text-anchor="middle">{{ y }}</text>{% endfor %}
   </svg>
   <div class="viz-legend">{% for t in types %}<span class="key"><span class="swatch sw-{{ 'cat-' ~ loop.index if loop.index <= 8 else 'cat-other' }}"></span>{{ t }}</span>{% endfor %}</div>
-  <p class="viz-note">Among messages whose poster had a matched affiliation at the time. That is {% set ks = known.values()|list %}{{ '%.0f'|format((ks|min) * 100) }}–{{ '%.0f'|format((ks|max) * 100) }}% of a year's messages; the rest come from people whose signatures name no matched institution.</p>
+  <p class="viz-note">These shares only count messages whose poster had a matched affiliation at the time, which is {% set ks = known.values()|list %}{{ '%.0f'|format((ks|min) * 100) }}–{{ '%.0f'|format((ks|max) * 100) }}% of a given year's messages. The rest come from people whose signatures don't name an institution that could be matched.</p>
 </figure>
 
 <form class="viz-controls" method="get">
@@ -35,7 +35,7 @@
   <svg viewBox="0 0 {{ points.W }} {{ points.H }}" role="img" aria-label="Dot map of institutions by messages from affiliated posters, {{ era }}">
     {% for p in points.points %}<a href="{{ url_for('institution', unitid=p.unitid) }}"><circle class="node named" cx="{{ p.x }}" cy="{{ p.y }}" r="{{ p.r }}" data-tip-title="{{ p.name }}" data-tip="{{ p.posts }} messages, {{ era }} · {{ p.type }}"></circle></a>{% endfor %}
   </svg>
-  <p class="viz-note">Contiguous United States, placed by latitude and longitude (no base map); dot area follows messages from people affiliated there in {{ era }}. Institutions elsewhere are in the table.</p>
+  <p class="viz-note">The contiguous United States, placed by latitude and longitude with no base map underneath. Each dot's size follows the messages from people affiliated there in {{ era }}, and institutions outside the lower 48 are in the table below.</p>
 </figure>
 {% endif %}
 
@@ -46,7 +46,7 @@
 </table>
 
 <h2 class="section-head">{{ ic('ic-redpen', 'ic-sm ic-quiet') }} Not yet matched ({{ "{:,}".format(n_unmatched) }})</h2>
-<p class="meta">Institution names from signatures and job ads that matched no IPEDS institution, or more than one. Closed and renamed schools land here, as do generic names. The most frequent:</p>
+<p class="meta">Institution names from signatures and job ads that didn't match an IPEDS institution, or matched more than one. Closed and renamed schools end up here, and so do generic names. These are the most frequent:</p>
 <table class="data"><tbody>{% for u in unmatched %}<tr><td class="l">{{ u.name }}</td><td>{{ u.n }}</td><td class="l meta">{{ u.sources }}</td></tr>{% endfor %}</tbody></table>
 
 <details class="methodology-section">

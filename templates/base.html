@@ -21,7 +21,8 @@
 <body>
 {% include "_icons_wpa.html" %}
 <a class="skip" href="#main">Skip to content</a>
-<div class="draft-banner" role="note">Working draft. Page text is placeholder.</div>
+<div class="draft-banner" role="note">Working draft. The text and tools are still being checked, and corrections are welcome.</div>
+<div class="retro-banner retro-only" role="note"><b>WPA-L Archives</b><span>Writing Program Administration &middot; LISTSERV logs, January 1993 to May 2021</span></div>
 
 <div class="layout">
 
@@ -62,7 +63,8 @@
 
     <div class="capsa-foot">
       <a class="capsa-back" href="{{ url_for('home') }}">&#8592; All years</a>
-      <button class="figure-toggle" type="button" id="figure-toggle" aria-live="polite" hidden>Black-figure</button>
+      <button class="figure-toggle modern-only" type="button" id="figure-toggle" aria-live="polite" hidden>Black-figure</button>
+      <button class="figure-toggle skin-toggle" type="button" aria-live="polite" title="Show the archive the way LISTSERV's web pages did" hidden>Retro view</button>
     </div>
   </aside>
 
@@ -72,7 +74,7 @@
     </div>
     <footer class="column-foot meta">
       Source: the WPA-L archive, 1993–2021, deposited on the Internet Archive under a public-domain mark.
-      Email addresses are removed. <a href="{{ url_for('opt_out') }}">Ask to have your messages withdrawn</a>.
+      Email addresses have been removed. If you posted to the list, you can <a href="{{ url_for('opt_out') }}">ask to have your messages withdrawn</a>.
     </footer>
   </main>
 

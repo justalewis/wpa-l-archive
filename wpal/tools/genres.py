@@ -58,18 +58,36 @@ def register(app) -> None:
         table = {}
         for r in by_year:
             table.setdefault(r["year"], {k: 0 for k in kinds})[r["rank_type"]] += r["n"]
-        top = app.con().execute(
-            "SELECT institution, COUNT(*) n, MIN(year) first, MAX(year) last FROM jobs WHERE institution != '' "
-            "GROUP BY institution ORDER BY n DESC LIMIT 30").fetchall()
+        # Schools as matched to IPEDS by the institutions stage; without it, the cleaned names.
+        matched = app.cached("jobs_matched", lambda: bool(app.con().execute(
+            "SELECT 1 FROM sqlite_master WHERE name = 'institutions'").fetchone()) and "unitid" in {
+            r[1] for r in app.con().execute("PRAGMA table_info(jobs)")} and bool(app.con().execute(
+            "SELECT 1 FROM jobs WHERE unitid IS NOT NULL LIMIT 1").fetchone()))
+        if matched:
+            top = app.cached("jobs_top", lambda: [dict(r) for r in app.con().execute(
+                "SELECT i.unitid, i.name institution, i.state, COUNT(*) n, MIN(j.year) first, MAX(j.year) last "
+                "FROM jobs j JOIN institutions i ON i.unitid = j.unitid GROUP BY i.unitid ORDER BY n DESC LIMIT 30")])
+            n_unmatched = app.cached("jobs_unmatched", lambda: app.con().execute(
+                "SELECT COUNT(*) FROM jobs WHERE unitid IS NULL").fetchone()[0])
+        else:
+            top = app.cached("jobs_top", lambda: [dict(r) for r in app.con().execute(
+                "SELECT NULL unitid, institution, NULL state, COUNT(*) n, MIN(year) first, MAX(year) last FROM jobs "
+                "WHERE institution != '' GROUP BY institution ORDER BY n DESC LIMIT 30")])
+            n_unmatched = None
+        n_jobs = app.cached("jobs_n", lambda: app.con().execute("SELECT COUNT(*) FROM jobs").fetchone()[0])
         rank = request.args.get("rank")
         year = request.args.get("year", type=int)
         listing = []
         if rank or year:
             listing = app.con().execute(
-                "SELECT j.*, v.subject FROM jobs j JOIN visible v ON v.uid = j.uid WHERE (? IS NULL OR j.rank_type = ?) "
+                "SELECT j.*, v.subject, " + ("i.name school" if matched else "j.institution school") + " "
+                "FROM jobs j JOIN visible v ON v.uid = j.uid "
+                + ("LEFT JOIN institutions i ON i.unitid = j.unitid " if matched else "") +
+                "WHERE (? IS NULL OR j.rank_type = ?) "
                 "AND (? IS NULL OR j.year = ?) ORDER BY j.posted_at LIMIT 300", (rank, rank, year, year)).fetchall()
         peak = max((sum(v.values()) for v in table.values()), default=1)
         return render_template("jobs.html", table=table, kinds=kinds, top=top, listing=listing, rank=rank, year=year,
+                               n_unmatched=n_unmatched, n_jobs=n_jobs,
                                peak=peak, active_nav="genres")
 
     def message_genre(m):

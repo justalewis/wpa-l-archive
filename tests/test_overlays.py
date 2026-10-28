@@ -39,11 +39,14 @@ def test_events_load_and_overlay(app):
     c = app.test_client()
     page = c.get("/events").data.decode()
     assert "CCCC, San Diego" in page and "Board change" in page
-    assert 'class="event-line"' not in c.get("/timeline").data.decode()
-    tl = c.get("/timeline?events=1").data.decode()
-    assert tl.count('class="event-line"') == 2 and 'data-tip-title="CCCC, San Diego"' in tl
+    # On by default on the timeline: CCCC as a diamond, everything else numbered and keyed.
+    tl = c.get("/timeline").data.decode()
+    assert tl.count('class="ev-cccc"') == 1 and tl.count('class="ev-num"') == 1
+    assert 'data-tip-title="CCCC, San Diego"' in tl and "Board change" in tl.split('class="ev-key"')[1]
+    assert 'class="ev-num"' not in c.get("/timeline?events=0").data.decode()
+    assert 'class="ev-num"' not in c.get("/trends?terms=placement").data.decode()
     tr = c.get("/trends?terms=placement&events=1").data.decode()
-    assert "event-line" in tr
+    assert 'class="ev-cccc"' in tr or 'class="ev-num"' in tr
 
 
 def test_participation_respects_withdrawal(app):

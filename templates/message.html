@@ -8,6 +8,13 @@
   <div class="page-head">
     <h1>{{ m.subject or "(no subject)" }}</h1>
   </div>
+  <p class="lsv-nav retro-only">[ <a href="{{ url_for('thread', key=thread_key) }}#{{ m.uid }}">Thread</a> | <a href="{{ url_for('month_view', year=m.year, month=m.month) }}">{{ MONTHS[m.month] }} {{ m.year }} index</a>{% if parent %} | <a href="{{ url_for('message', uid=parent.uid) }}">In reply to</a>{% endif %} | <a href="{{ url_for('home') }}">All years</a> ]</p>
+  <table class="lsv-head retro-only">
+    <tr><th>Subject:</th><td>{{ m.subject or "(no subject)" }}</td></tr>
+    <tr><th>From:</th><td>{{ who(m.from_name, m.person_id) }}</td></tr>
+    <tr><th>Date:</th><td>{{ m.sent_at|when("%a, %d %b %Y %H:%M:%S +0000") }}</td></tr>
+    <tr><th>Content-Type:</th><td>text/plain</td></tr>
+  </table>
   <div class="msg-head">
     {% if genre %}<a class="genre-mark" href="{{ url_for('genres') }}">{{ ic(GENRE_ICONS[genre], 'ic-sm ic-quiet') }} {{ GENRE_NAMES[genre] }}</a>{% endif %}
     <span class="who">{{ who(m.from_name, m.person_id) }}</span>

@@ -26,6 +26,7 @@ import collections
 import csv
 import re
 
+from .genre import GENERIC_WORDS
 from .network import ERAS
 
 CARNEGIE = [  # (lowest code, highest code, group)
@@ -34,6 +35,12 @@ CARNEGIE = [  # (lowest code, highest code, group)
     (33, 33, "Tribal"),
 ]
 TYPE_ORDER = [g for _, _, g in CARNEGIE] + ["Not classified"]
+
+# Words that can precede a school's name in a signature or ad without being part of it.
+NOISE_WORDS = {"faculty", "senate", "chair", "position", "program", "programs", "director", "center", "centre",
+               "professor", "lecturer", "dept", "coordinator", "assistant", "associate", "tenure", "track",
+               "rhetoric", "composition", "first", "year", "new", "a", "an", "with", "on", "by", "from", "to"}
+SCHOOL_WORDS = {"university", "college", "institute", "polytechnic"}
 
 
 def carnegie_type(code: int) -> str:
@@ -76,30 +83,34 @@ def run(db, ctx) -> None:
         return
     from rapidfuzz import fuzz, process
 
-    ipeds, exact = {}, {}
+    ipeds, exact, rank = {}, {}, {}
     with open(path, encoding="latin-1", newline="") as fh:
         for r in csv.DictReader(fh):
             uid = int(r["UNITID"])
             code = int(r["C21BASIC"]) if r["C21BASIC"].lstrip("-").isdigit() else -2
             ipeds[uid] = (r["INSTNM"], r["CITY"], r["STABBR"], code, carnegie_type(code),
                           float(r["LATITUDE"] or 0), float(r["LONGITUD"] or 0))
+            # For a name that fits several campuses: the largest, then a main campus,
+            # never an online arm.
+            size = int(r["INSTSIZE"]) if r.get("INSTSIZE", "").lstrip("-").isdigit() else -2
+            nm_l = r["INSTNM"].lower()
+            rank[uid] = (size, int("main campus" in nm_l or "campus immersion" in nm_l or nm_l.endswith("-oxford")),
+                         -int(any(w in nm_l for w in ("global", "digital", "online", "academy"))))
             for nm in [r["INSTNM"], *re.split(r"[|;,]", r["IALIAS"] or "")]:
                 k = norm(nm)
-                if len(k) > 4:
+                # A generic alias ("College of Arts and Sciences") would match every
+                # name that contains it.
+                if len(k) > 4 and not set(k.split()) <= GENERIC_WORDS:
                     exact.setdefault(k, set()).add(uid)
     names = {k: k for k in exact}
 
-    mentions = collections.Counter()
-    sources = collections.defaultdict(set)
-    for inst, n in db.execute("SELECT institution, SUM(n) FROM affiliations GROUP BY institution"):
-        mentions[inst] += n
-        sources[inst].add("signatures")
-    try:
-        for inst, n in db.execute("SELECT institution, COUNT(*) FROM jobs WHERE institution != '' GROUP BY institution"):
-            mentions[inst] += n
-            sources[inst].add("job ads")
-    except Exception:
-        pass
+    def one_of(uids):
+        """The single best campus among several, or None when they tie."""
+        if len(uids) == 1:
+            return next(iter(uids))
+        best = sorted(uids, key=lambda u: (rank[u][2], rank[u][0], rank[u][1]), reverse=True)
+        top = (rank[best[0]][2], rank[best[0]][0], rank[best[0]][1])
+        return best[0] if (rank[best[1]][2], rank[best[1]][0], rank[best[1]][1]) < top else None
 
     decided = {}
     dpath = ctx.decisions / "institution_matches.csv"
@@ -108,27 +119,92 @@ def run(db, ctx) -> None:
             for r in csv.DictReader(fh):
                 decided[r["name"].strip()] = None if r["unitid"].strip() == "none" else int(r["unitid"])
 
+    looked = {}
+
+    def lookup(raw):
+        """(unitid, method, confidence) for a name, or None: a decision, else exact, else unique fuzzy."""
+        if raw not in looked:
+            looked[raw] = _lookup(raw)
+        return looked[raw]
+
+    def _lookup(raw):
+        if raw in decided:
+            return (decided[raw], "decision", 1.0) if decided[raw] else None
+        k = norm(raw)
+        hits = exact.get(k, set())
+        if hits:
+            u = one_of(hits)
+            return (u, "exact", 1.0) if u else None
+        if len(k.split()) < 2:
+            return None
+        # A fuzzy match has to share its distinctive words: every one of the shorter
+        # name's non-generic words must appear in the longer name.
+        q = set(k.split()) - GENERIC_WORDS
+        if not q:
+            return None
+        kt = k.split()
+        opens, inside = set(), {}
+        for c, _, _ in process.extract(k, names.keys(), scorer=fuzz.token_set_ratio, limit=20, score_cutoff=100):
+            ct = c.split()
+            if not set(ct) - GENERIC_WORDS:
+                continue
+            if kt == ct[:len(kt)]:  # "Oklahoma State University" opens "...-Main Campus"
+                opens |= exact[c]
+                continue
+            # The IPEDS name sits inside the signature or ad text, with only department
+            # words before it ("English", "Faculty Senate") and no other school after it.
+            for i in range(len(kt) - len(ct) + 1):
+                if kt[i:i + len(ct)] == ct:
+                    lead, trail = kt[:i], kt[i + len(ct):]
+                    if set(lead) <= GENERIC_WORDS | NOISE_WORDS and not set(trail) & SCHOOL_WORDS:
+                        inside.setdefault(len(ct), set()).update(exact[c])
+                    break
+        # "University of Washington, Bothell" opens "...-Bothell Campus"; that beats the
+        # shorter "University of Washington" found inside it. Otherwise the longest wins.
+        uids = opens or (inside[max(inside)] if inside else set())
+        u = one_of(uids) if uids else None
+        return (u, "fuzzy", 0.85) if u else None
+
+    mentions = collections.Counter()
+    sources = collections.defaultdict(set)
+    for inst, n in db.execute("SELECT institution, SUM(n) FROM affiliations GROUP BY institution"):
+        mentions[inst] += n
+        sources[inst].add("signatures")
+
+    # A job ad names its school among other things ("College of Arts and Sciences",
+    # a partner campus); take the first of its candidate names that matches IPEDS,
+    # trying a "Name, Campus" candidate without the campus as well.
+    job_units = []
+    has_jobs = bool(db.execute("SELECT 1 FROM sqlite_master WHERE name = 'jobs'").fetchone())
+    has_cands = has_jobs and "candidates" in {r[1] for r in db.execute("PRAGMA table_info(jobs)")}
+    if has_cands:
+        for uid, first, cands in db.execute("SELECT uid, institution, candidates FROM jobs"):
+            hit_name, hit = None, None
+            for c in [c for c in (cands or "").split("|") if c]:
+                for name in dict.fromkeys([c, re.sub(r"\s*[,–-]\s*[A-Z][a-z]+(?: [A-Z][a-z]+)?$", "", c)]):
+                    hit = lookup(name)
+                    if hit:
+                        hit_name = name
+                        break
+                if hit:
+                    break
+            name = hit_name or first
+            if name:
+                mentions[name] += 1
+                sources[name].add("job ads")
+            job_units.append((hit[0] if hit else None, hit_name or first, uid))
+
     alias_rows, unmatched = [], []
     match = {}
     for raw, n in mentions.items():
-        if raw in decided:
-            if decided[raw]:
-                match[raw] = decided[raw]
-                alias_rows.append((raw, decided[raw], "decision", 1.0))
-            continue
-        k = norm(raw)
-        hits = exact.get(k, set())
-        if len(hits) == 1:
-            match[raw] = next(iter(hits))
-            alias_rows.append((raw, match[raw], "exact", 1.0))
-            continue
-        cands = process.extract(k, names.keys(), scorer=fuzz.token_set_ratio, limit=6, score_cutoff=100)
-        uids = {u for c, _, _ in cands for u in exact[c]}
-        if len(uids) == 1 and len(k.split()) >= 2:
-            match[raw] = next(iter(uids))
-            alias_rows.append((raw, match[raw], "fuzzy", 0.85))
-        else:
+        hit = lookup(raw)
+        if hit:
+            match[raw] = hit[0]
+            alias_rows.append((raw, *hit))
+        elif raw not in decided:
             unmatched.append((raw, n, ", ".join(sorted(sources[raw]))))
+    if job_units:
+        db.executemany("UPDATE jobs SET unitid = ?, institution = ? WHERE uid = ?", job_units)
 
     used = set(match.values())
     db.executemany("INSERT INTO institutions VALUES (?,?,?,?,?,?,?,?)",

@@ -13,7 +13,7 @@
     {{ confidence.reason }} <b>{{ confidence.level|capitalize }} confidence.</b> <a href="#how-threaded">How this thread was put together</a></p>
   {% endif %}
   {% if continuations %}
-  <p class="meta">Possibly the same discussion:
+  <p class="meta">This conversation may continue in:
     {% for c in continuations %}<a href="{{ url_for('thread', key=c.other) }}">thread of {{ c.started_at|when("%d %b %Y") }}</a> ({{ c.n_messages }} messages, {{ c.shared_people }} people in common){{ ", " if not loop.last }}{% endfor %}.</p>
   {% endif %}
 </div>
@@ -25,6 +25,11 @@
     {% if m.parent_uid and m.parent_uid in names %}<span class="re">replying to <a href="#{{ m.parent_uid }}">{{ names[m.parent_uid] }}</a></span>{% endif %}
   </div>
   {% if m.subject != t.subject %}<p class="subj">{{ m.subject }}</p>{% endif %}
+  <table class="lsv-head retro-only">
+    <tr><th>Subject:</th><td><a href="{{ url_for('message', uid=m.uid) }}">{{ m.subject or t.subject }}</a></td></tr>
+    <tr><th>From:</th><td>{{ who(m.from_name, m.person_id) }}</td></tr>
+    <tr><th>Date:</th><td>{{ m.sent_at|when("%a, %d %b %Y %H:%M:%S +0000") }}</td></tr>
+  </table>
   <div class="msg-body">{{ m.body|render_body }}</div>
 </article>
 {% endfor %}
@@ -37,20 +42,20 @@
       {% for r in confidence.methods %}<tr><td class="l">{{ {"message-id": "message headers name the parent", "wrote-line": "an “X wrote:” line names an earlier poster", "in-reply-to": "shares a reply header with an earlier reply", "subject-window": "same subject within 30 days", "override": "a reviewed correction"}.get(r.link_method, r.link_method) }}</td><td>{{ r.n }}</td></tr>{% endfor %}
     </tbody></table>
     {% endif %}
-    <p>From about 2010 the list's logs keep each message's ID, so replies link to their parents directly. Before that, messages are grouped by subject line (ignoring “Re:” and “Fwd:”) within a 30-day window, and a reply's parent is the earlier message whose author its “X wrote:” line names, or else the message just before it. Confidence weighs the share of header-linked replies, how common the subject is across the list, and how long the thread ran{% if confidence.score is not none %} (score {{ "%.2f"|format(confidence.score) }}){% endif %}.</p>
+    <p>From about 2010 on, the list's logs keep each message's ID, so a reply links straight to its parent. Before that, messages are grouped by subject line (ignoring “Re:” and “Fwd:”) within a 30-day window, and a reply's parent is the earlier message whose author its “X wrote:” line names, or, failing that, the message just before it. The confidence rating weighs how many replies are linked by headers, how common the subject is across the list, and how long the thread ran{% if confidence.score is not none %} (score {{ "%.2f"|format(confidence.score) }}){% endif %}.</p>
   </div>
 </details>
 
 <section class="cite-box" id="flag">
   <h2>{{ ic('ic-redpen', 'ic-sm ic-quiet') }} Flag this thread</h2>
-  {% if flagged %}<p class="ok-note">Thanks. The flag is queued for review; accepted corrections apply on the next rebuild.</p>{% else %}
+  {% if flagged %}<p class="ok-note">Thanks! Your flag is in the review queue, and accepted corrections show up after the next rebuild.</p>{% else %}
   <form class="form" method="post" action="{{ url_for('thread_flag', key=t.root_uid) }}">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
     <fieldset class="f"><legend>What looks wrong?</legend>
       {% for k, label in flag_problems.items() %}<label><input type="radio" name="problem" value="{{ k }}" required> {{ label }}</label>{% endfor %}
     </fieldset>
-    <div class="f"><label for="flag-note">Details (optional): which messages, which other thread</label><textarea id="flag-note" name="note" rows="2" maxlength="2000"></textarea></div>
+    <div class="f"><label for="flag-note">Details (optional): which messages, or which other thread they belong with</label><textarea id="flag-note" name="note" rows="2" maxlength="2000"></textarea></div>
     <button class="btn" type="submit">Send flag</button>
   </form>
   {% endif %}

@@ -7,5 +7,7 @@
   try {
     var f = localStorage.getItem('wpa-figure');
     if (f === 'light' || f === 'dark') document.documentElement.setAttribute('data-theme', f);
+    /* The retro LISTSERV skin (retro.css), applied the same way. */
+    if (localStorage.getItem('wpa-skin') === 'listserv') document.documentElement.setAttribute('data-skin', 'listserv');
   } catch (e) {}
 })();

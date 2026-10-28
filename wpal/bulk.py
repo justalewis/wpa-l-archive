@@ -150,7 +150,13 @@ def write_bundle(archive: str, requests: str, base_url: str) -> Path:
     if dest.exists():  # another builder finished first
         tmp.unlink(missing_ok=True)
         return dest
-    os.replace(tmp, dest)
+    try:
+        os.replace(tmp, dest)
+    except PermissionError:  # Windows: another builder's copy landed and is open
+        if not dest.exists():
+            raise
+        tmp.unlink(missing_ok=True)
+        return dest
     for old in [*dest.parent.glob(f"{STEM}-*.zip"), *dest.parent.glob(f"{STEM}-*.partial")]:
         if old != dest and not (old.suffix == ".partial" and time.time() - old.stat().st_mtime < 3600):
             try:

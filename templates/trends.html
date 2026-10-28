@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% from "_macros.html" import ic with context %}
+{% from "_events.html" import event_band, event_key with context %}
 {% block title %}Trends · WPA-L Archive Reader{% endblock %}
 {% block content %}
 <div class="page-head">
   <h1>Term trends</h1>
-  <p class="lede">How much of the list's talk mentioned a term, year by year or month by month. Rates are per 1,000 messages (or per 10,000 words), because the list's volume rose and fell about tenfold; raw counts mostly track how busy it was.</p>
+  <p class="lede">Type in a few terms to see how often the list talked about them, year by year or month by month. Rates are per 1,000 messages (or per 10,000 words), because the list's volume rose and fell about tenfold over its life, and raw counts mostly just track how busy it was.</p>
 </div>
 
 <form class="viz-controls" method="get">
@@ -19,7 +20,7 @@
   <label for="smooth">Smoothing</label>
   <select id="smooth" name="smooth"><option value="0">none</option><option value="3" {{ "selected" if smooth == "3" }}>3 months</option><option value="12" {{ "selected" if smooth == "12" }}>12 months</option></select>
   <label><input type="checkbox" name="fresh" value="1" {{ "checked" if fresh }}> own words only (no quoted text)</label>
-  <label><input type="checkbox" name="events" value="1" {{ "checked" if events_on }}> show events</label>
+  <label><input type="checkbox" name="events" value="1" {{ "checked" if events_on }}> show the field's events</label>
   <button class="btn" type="submit">Draw</button>
 </form>
 
@@ -30,14 +31,14 @@
 {% set ylabel = ("messages per 1,000" if mode == "messages" else "occurrences per 10,000 words") if measure == "rate" else ("messages" if mode == "messages" else "occurrences") %}
 <figure class="viz chart trends-chart">
   <div class="viz-stats">{% for s in series %}<span>{{ s.term }}: {{ "{:,}".format(s.total) }} {{ "messages" if mode == "messages" else "occurrences" }}</span>{% if not loop.last %} · {% endif %}{% endfor %}</div>
-  <svg viewBox="0 0 {{ chart.W }} {{ chart.H }}" role="img" aria-label="Line chart of {{ ylabel }} for {{ terms|join(', ') }}">
+  <svg viewBox="0 0 {{ chart.W }} {{ chart.H + 80 if event_marks else chart.H }}" role="img" aria-label="Line chart of {{ ylabel }} for {{ terms|join(', ') }}">
     {% for ty, tv in chart.ticks %}
       <line class="grid" x1="{{ chart.X0 }}" x2="{{ chart.W - 10 }}" y1="{{ ty }}" y2="{{ ty }}"></line>
       <text x="{{ chart.X0 - 6 }}" y="{{ ty + 4 }}" text-anchor="end">{{ "%.1f"|format(tv) if measure == "rate" else "{:,}".format(tv|int) }}</text>
     {% endfor %}
     <line class="base" x1="{{ chart.X0 }}" x2="{{ chart.W - 10 }}" y1="{{ chart.Y0 }}" y2="{{ chart.Y0 }}"></line>
     {% for x, yr in chart.years %}<text x="{{ x }}" y="{{ chart.Y0 + 18 }}" text-anchor="middle">{{ yr }}</text>{% endfor %}
-    {% block chart_underlay %}{% if event_marks %}{% for ev in event_marks %}<line class="event-line ev-{{ ev.category }}" x1="{{ ev.x }}" x2="{{ ev.x }}" y1="16" y2="{{ chart.Y0 }}" data-tip-title="{{ ev.label }}" data-tip="{{ ev.when }}"></line>{% endfor %}{% endif %}{% endblock %}
+    {% block chart_underlay %}{{ event_band(event_marks, 16, chart.Y0, chart.Y0 + 40) }}{% endblock %}
     {% for s in series %}
       <polyline class="series s{{ s.slot }}" points="{{ s.path }}"></polyline>
       {% for px, py, v, ym in s.points %}
@@ -50,9 +51,10 @@
   </svg>
   <div class="viz-legend">
     {% for s in series %}<span class="key"><span class="swatch sw-cat-{{ s.slot }}"></span>{{ s.term }}</span>{% endfor %}
-    {% block legend_extra %}{% if event_marks %}<span class="key"><span class="swatch sw-event"></span>events</span>{% endif %}{% endblock %}
+    {% block legend_extra %}{% endblock %}
   </div>
-  <p class="viz-note">Y axis: {{ ylabel }}. Select a point to open the matching messages for that {{ unit }}. {% if smooth != "0" and unit == "month" %}Each point is the average of the {{ smooth }} months ending there.{% endif %}</p>
+  {{ event_key(event_marks) }}
+  <p class="viz-note">Y axis: {{ ylabel }}. Click a point to open the matching messages for that {{ unit }}. {% if smooth != "0" and unit == "month" %}Each point is the average of the {{ smooth }} months ending there.{% endif %}</p>
 </figure>
 {% block trends_after %}{% endblock %}
 <table class="data">
@@ -66,7 +68,7 @@
 </table>
 {% if unit == "month" %}<p class="meta">Switch to “by year” for the table of values.</p>{% endif %}
 {% elif terms == [] %}
-<div class="viz-empty">{{ ic('ic-trends', 'ic-absent') }} Enter one or more terms to draw their trajectories. Try <a href="{{ url_for('trends', terms='assessment, outcomes, portfolio') }}">assessment, outcomes, portfolio</a> or <a href="{{ url_for('trends', terms='adjunct, contingent, labor', unit='month', smooth='12') }}">adjunct, contingent, labor</a>.</div>
+<div class="viz-empty">{{ ic('ic-trends', 'ic-absent') }} Enter one or more terms to draw them. To get started, try <a href="{{ url_for('trends', terms='assessment, outcomes, portfolio') }}">assessment, outcomes, portfolio</a> or <a href="{{ url_for('trends', terms='adjunct, contingent, labor', unit='month', smooth='12') }}">adjunct, contingent, labor</a>.</div>
 {% endif %}
 
 <details class="methodology-section">

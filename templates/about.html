@@ -2,18 +2,18 @@
 {% block title %}About · WPA-L Archive Reader{% endblock %}
 {% block content %}
 <h1>About this reader</h1>
-<p class="placeholder">[Draft placeholder. The public about page has not been written; this is a working description.]</p>
-<h2>What is here</h2>
-<p>The monthly LISTSERV logs of WPA-L from its years at Arizona State University, January 1993 to May 2021, as deposited on the Internet Archive ("WPA-L Archive 1993–2021 Complete Uncompressed"). The logs are split into messages, threaded, and indexed for search.</p>
-<h2>What is changed</h2>
+<h2>What's here</h2>
+<p>For almost thirty years, WPA-L was where writing program administrators asked each other questions, argued about placement and assessment, posted jobs and calls for papers, and marked the field's losses. This reader holds the list's monthly LISTSERV logs from its years at Arizona State University, January 1993 to May 2021, as they were deposited on the Internet Archive ("WPA-L Archive 1993–2021 Complete Uncompressed"). The logs have been split into individual messages, put back into threads, and indexed so you can search them.</p>
+<h2>What's been changed</h2>
+<p>The messages read the way they were posted, with a few deliberate exceptions:</p>
 <ul>
-  <li>Email addresses are removed from headers, bodies, signatures, and quoted lines.</li>
-  <li>Attachments are left out; a message lists the types it carried.</li>
-  <li>Names appear as posted. Where a From line had only an address, the name comes from the same address's other posts; if there were none, the message shows "Unnamed poster."</li>
-  <li>The site asks search engines not to index it.</li>
+  <li>Email addresses have been taken out of headers, bodies, signatures and quoted lines.</li>
+  <li>Attachments aren't kept, though each message lists the types it carried.</li>
+  <li>Names appear as posted. When a From line had only an address, the name comes from that address's other posts, and when there weren't any, the message says "Unnamed poster."</li>
+  <li>The site asks search engines not to index it, so people come here to read the list on purpose.</li>
 </ul>
 <h2>How threads are rebuilt</h2>
-<p>From about 2010 the logs keep each message's Message-ID, so replies link to their parents directly. Before that, messages are grouped by subject line (ignoring "Re:" and "Fwd:") within a 30-day window, and a reply's parent is the earlier message whose author its "X wrote:" line names. Some long-running subjects will be split and some generic ones merged.</p>
+<p>From about 2010 on, the logs keep each message's Message-ID, so a reply links straight to its parent. Earlier messages had to be grouped by subject line (ignoring "Re:" and "Fwd:") within a 30-day window, and a reply's parent is the earlier message whose author its "X wrote:" line names. That method isn't perfect: some long-running subjects get split in two, and some generic ones ("Job announcement") get merged. Every thread page says how confident the rebuild is and has a form for flagging mistakes.</p>
 {% if cov.years %}
 <h2>Coverage</h2>
 <p class="meta">Built {{ built }} from {{ cov.files }} monthly files.</p>

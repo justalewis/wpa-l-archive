@@ -60,7 +60,7 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
     app.config["CACHE"] = {}
     dbmod.init_requests(app.config["REQUESTS"])
     asset_v = str(int(max(os.path.getmtime(os.path.join(app.static_folder, f))
-                          for f in ("wpa.css", "site.js", "tokens.css"))))
+                          for f in ("wpa.css", "retro.css", "site.js", "figure-head.js", "tokens.css"))))
 
     def con():
         if "con" not in g:
@@ -314,7 +314,7 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
                         f"ORDER BY m.sent_at",
                         [*params, PAGE + 1, (page - 1) * PAGE]).fetchall()
             except Exception:
-                error = "That search could not be read. Try plain words, or put a phrase in double quotes."
+                error = "That search didn't work as written. Try plain words, or put a phrase in double quotes."
 
         def page_url(p, norm=None):
             extra = {"page": p} if p > 1 else {}
@@ -346,15 +346,15 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
             if request.form.get("website"):  # honeypot
                 return redirect(url_for("opt_out_thanks"))
             if not csrf_ok():
-                errors.append("The form expired. Please send it again.")
+                errors.append("The form timed out. Could you send it again?")
             if not form["name_as_posted"]:
-                errors.append("Give the name your messages were posted under.")
+                errors.append("Please give the name your messages were posted under.")
             if not form["contact"]:
-                errors.append("Give a way to reach you so the request can be confirmed.")
+                errors.append("Please give a way to reach you, so the request can be confirmed.")
             if form["relationship"] not in ("self", "representative", "estate"):
-                errors.append("Say whose messages these are.")
+                errors.append("Please say whose messages these are.")
             if any(len(v) > 4000 for v in form.values()):
-                errors.append("One of the fields is too long.")
+                errors.append("One of the fields is too long. Could you shorten it?")
             if not errors:
                 with dbmod.state(app.config["REQUESTS"]) as rc:
                     rc.execute(
@@ -386,7 +386,7 @@ def create_app(archive: str | None = None, requests_db: str | None = None) -> Fl
 
     @app.errorhandler(404)
     def nf(_e):
-        return render_template("error.html", code=404, msg="Nothing here."), 404
+        return render_template("error.html", code=404, msg="There's nothing at this address. The link may be off by a character, or the page may have moved."), 404
 
     @app.errorhandler(410)
     def gone(_e):

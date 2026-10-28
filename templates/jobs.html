@@ -5,7 +5,7 @@
 <p class="crumbs"><a href="{{ url_for('genres') }}">{{ ic('ic-genre', 'ic-sm ic-quiet') }} Genres</a> / Job ads</p>
 <div class="page-head">
   <h1>Job ads</h1>
-  <p class="lede">Positions announced on the list, sorted by the kind of job the ad describes. A labor-market record of the field, though only of the jobs someone chose to post here.</p>
+  <p class="lede">Positions announced on the list, sorted by the kind of job each ad describes. Together they make a rough record of the field's job market, with one caveat: they only include the jobs someone chose to post here.</p>
 </div>
 
 <table class="data">
@@ -19,23 +19,24 @@
 <ol class="entries">
 {% for j in listing %}
   <li class="entry">
-    <div class="entry-meta"><span class="entry-date">{{ j.posted_at|when("%d %b %Y") }}</span><span>{{ j.rank_type }}</span>{% if j.institution %}<span>{{ j.institution }}</span>{% endif %}</div>
+    <div class="entry-meta"><span class="entry-date">{{ j.posted_at|when("%d %b %Y") }}</span><span>{{ j.rank_type }}</span>{% if j.school %}<span>{% if j.unitid %}<a href="{{ url_for('institution', unitid=j.unitid) }}">{{ j.school }}</a>{% else %}{{ j.school }}{% endif %}</span>{% endif %}</div>
     <div class="entry-title-row"><a class="entry-title" href="{{ url_for('message', uid=j.uid) }}">{{ j.title }}</a></div>
   </li>
 {% endfor %}
 </ol>
 {% endif %}
 
-<h2 class="section-head">{{ ic('ic-institution', 'ic-sm ic-quiet') }} Institutions posting most often</h2>
+<h2 class="section-head">{{ ic('ic-institution', 'ic-sm ic-quiet') }} Schools posting most often</h2>
 <table class="data">
-  <thead><tr><th scope="col">Institution</th><th scope="col">Ads</th><th scope="col">First</th><th scope="col">Last</th></tr></thead>
-  <tbody>{% for r in top %}<tr><td class="l">{{ r.institution }}</td><td>{{ r.n }}</td><td>{{ r.first }}</td><td>{{ r.last }}</td></tr>{% endfor %}</tbody>
+  <thead><tr><th scope="col">School</th><th scope="col">State</th><th scope="col">Ads</th><th scope="col">First</th><th scope="col">Last</th></tr></thead>
+  <tbody>{% for r in top %}<tr><td class="l">{% if r.unitid %}<a href="{{ url_for('institution', unitid=r.unitid) }}">{{ r.institution }}</a>{% else %}{{ r.institution }}{% endif %}</td><td>{{ r.state or '' }}</td><td>{{ r.n }}</td><td>{{ r.first }}</td><td>{{ r.last }}</td></tr>{% endfor %}</tbody>
 </table>
+{% if n_unmatched is not none %}<p class="meta">Each ad is matched to a school in the IPEDS directory. {{ "{:,}".format(n_jobs - n_unmatched) }} of the {{ "{:,}".format(n_jobs) }} ads matched one; the other {{ "{:,}".format(n_unmatched) }} name no school clearly enough to match (a university system with no campus, a school that has since closed, or no school at all), so they're counted above but left out of this table.</p>{% endif %}
 
 <details class="methodology-section">
   <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} Methodology</summary>
   <div class="methodology-body">
-    <p>Job ads are messages labeled “job ad” on the Genres page that start a thread (replies about a job are left out). The kind comes from the ad's subject and opening: a writing center director or coordinator; a WPA (director of writing, composition or first-year writing); non-tenure-line (lecturer, instructor, visiting, adjunct, part-time); tenure-line (tenure-track, assistant, associate or full professor); postdocs and fellowships; and other. The first rule that matches wins, in that order. The institution is the first university, college or institute named in the subject or opening, so an ad that names a partner school first can be misattributed. An ad posted twice counts twice.</p>
+    <p>Job ads are messages labeled “job ad” on the Genres page that start a thread (replies about a job are left out). The kind comes from the ad's subject and opening: a writing center director or coordinator; a WPA (director of writing, composition or first-year writing); non-tenure-line (lecturer, instructor, visiting, adjunct, part-time); tenure-line (tenure-track, assistant, associate or full professor); postdocs and fellowships; and other. The first rule that matches wins, in that order. To find the school, every university, college or institute named in the subject or opening is collected, generic names ("College of Arts and Sciences," a bare "University of") are set aside, and the first remaining name that matches exactly one school in the IPEDS directory wins. An ad that names a partner school before its own can still be misattributed, and an ad posted twice counts twice.</p>
   </div>
 </details>
 {% endblock %}

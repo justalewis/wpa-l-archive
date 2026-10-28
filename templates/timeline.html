@@ -1,21 +1,22 @@
 {% extends "base.html" %}
 {% from "_macros.html" import ic with context %}
+{% from "_events.html" import event_band, event_key with context %}
 {% block title %}Timeline · WPA-L Archive Reader{% endblock %}
 {% block content %}
 <div class="page-head">
   <h1>Messages per month</h1>
-  <p class="lede">Every month from January 1993 to May 2021. Hover a bar for its count; select it to open that month. The table below gives yearly totals.</p>
+  <p class="lede">Each bar is one month of WPA-L, from the first saved log in January 1993 to the last in May 2021. The list grew steadily through the 1990s, stayed busy through most of the 2000s, and peaked in 2013 at more than 10,500 messages before tapering off in its last years. Hover over a bar to see the month's count, or click it to read that month's threads.</p>
+  <p class="lede">The numbered markers under the chart are moments from the field's calendar, and the list just below the chart says what each one was and how busy the list was that month.</p>
 </div>
 <p class="toggle-row">{{ ic('ic-event', 'ic-sm ic-quiet') }}
-  {% if events_on %}<a href="{{ url_for('timeline') }}">hide events</a>{% else %}<a href="{{ url_for('timeline', events=1) }}">show the field's calendar (CCCC, statements, news)</a>{% endif %}</p>
+  {% if event_marks %}<a href="{{ url_for('timeline', events=0) }}">hide the events</a>{% else %}<a href="{{ url_for('timeline') }}">show the field's events on the chart</a>{% endif %}</p>
 {% set W = 3 %}{% set X0 = 52 %}{% set WIDTH = 29 * 12 * W + X0 %}{% set BASE = 290 %}{% set H = 270 %}
 <figure class="viz chart timeline">
-  <svg viewBox="0 0 {{ WIDTH }} 320" role="img" aria-label="Bar chart of messages per month, 1993 to 2021">
+  <svg viewBox="0 0 {{ WIDTH }} {{ 400 if event_marks else 320 }}" role="img" aria-label="Bar chart of messages per month, 1993 to 2021">
     {% for tick in [peak // 2, peak] %}{% set y = BASE - (tick / peak * H) %}
       <line class="grid" x1="{{ X0 }}" x2="{{ WIDTH }}" y1="{{ y }}" y2="{{ y }}"></line>
       <text x="{{ X0 - 8 }}" y="{{ y + 5 }}" text-anchor="end">{{ "{:,}".format(tick) }}</text>
     {% endfor %}
-    {% for ev in event_marks or [] %}<line class="event-line" x1="{{ ev.x }}" x2="{{ ev.x }}" y1="{{ BASE - H }}" y2="{{ BASE }}" data-tip-title="{{ ev.label }}" data-tip="{{ ev.when }}"></line>{% endfor %}
     {% for r in rows %}{% set i = (r.year - 1993) * 12 + r.month - 1 %}{% set h = (r.n / peak * H)|round(1) %}
       <a href="{{ url_for('month_view', year=r.year, month=r.month) }}"><g><title>{{ MONTHS[r.month] }} {{ r.year }}: {{ "{:,}".format(r.n) }} messages</title>
         <rect class="hit" x="{{ X0 + i * W }}" y="{{ BASE - H }}" width="{{ W }}" height="{{ H }}"></rect>
@@ -25,10 +26,13 @@
     {% for y in range(1993, 2022, 4) %}
       <text x="{{ X0 + (y - 1993) * 12 * W }}" y="{{ BASE + 22 }}">{{ y }}</text>
     {% endfor %}
+    {{ event_band(event_marks, BASE - H, BASE, BASE + 44) }}
   </svg>
+  {{ event_key(event_marks) }}
 </figure>
 {% block timeline_after %}{% endblock %}
 <h2 class="section-head">By year</h2>
+<p class="meta">The same counts year by year, with the number of threads each year held.</p>
 <table class="data">
   <thead><tr><th scope="col">Year</th><th scope="col">Messages</th><th scope="col">Threads</th></tr></thead>
   <tbody>{% for r in per_year %}<tr><th scope="row"><a href="{{ url_for('year_view', year=r.year) }}">{{ r.year }}</a></th><td>{{ "{:,}".format(r.n) }}</td><td>{{ "{:,}".format(r.t) }}</td></tr>{% endfor %}</tbody>

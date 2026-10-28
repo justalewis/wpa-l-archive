@@ -27,6 +27,25 @@
     });
   }
 
+  /* The retro skin. Any .skin-toggle button switches it; the choice is
+     remembered and applied before first paint by figure-head.js. */
+  var skinButtons = document.querySelectorAll('.skin-toggle');
+  var skinLabel = function () {
+    var on = document.documentElement.getAttribute('data-skin') === 'listserv';
+    skinButtons.forEach(function (sb) { sb.textContent = on ? 'Modern view' : 'Retro view'; });
+  };
+  skinButtons.forEach(function (sb) {
+    sb.hidden = false;
+    sb.addEventListener('click', function () {
+      var el = document.documentElement;
+      var on = el.getAttribute('data-skin') === 'listserv';
+      if (on) el.removeAttribute('data-skin'); else el.setAttribute('data-skin', 'listserv');
+      try { localStorage.setItem('wpa-skin', on ? 'modern' : 'listserv'); } catch (e) {}
+      skinLabel();
+    });
+  });
+  skinLabel();
+
   /* Copy buttons: <button class="copy-btn" data-copy="#id">. */
   document.querySelectorAll('.copy-btn[data-copy]').forEach(function (btn) {
     btn.hidden = false;

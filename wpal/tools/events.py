@@ -26,16 +26,27 @@ def register(app) -> None:
 
     app.events = events
 
-    def overlay(x_of):
-        """Event marks for a chart, given its function from (year, month) to x."""
-        if request.args.get("events") != "1":
+    def overlay(x_of, default=False):
+        """Event marks for a chart, given its function from (year, month) to x.
+
+        CCCC conventions come back as plain annual marks; everything else gets a
+        number, so the chart can carry a short marker and the key below it can say
+        what happened. Numbers follow date order over all events, so an event keeps
+        its number on every chart.
+        """
+        on = request.args.get("events", "1" if default else "0") == "1"
+        if not on:
             return []
-        out = []
+        out, n = [], 0
         for e in events():
+            if e["category"] != "cccc":
+                n += 1
             x = x_of(e["year"], e["month"])
             if x is not None:
                 when = e["date"] + (f" to {e['end_date']}" if e["end_date"] else "")
-                out.append({"x": round(x, 1), "label": e["label"], "category": e["category"], "when": when})
+                out.append({"x": round(x, 1), "label": e["label"], "category": e["category"], "when": when,
+                            "year": e["year"], "month": e["month"], "n": None if e["category"] == "cccc" else n,
+                            "kind": CATEGORIES.get(e["category"], e["category"])})
         return out
 
     app.event_overlay = overlay
@@ -75,9 +86,16 @@ def register(app) -> None:
         around = {k: sum(v) / len(v) for k, v in sorted(rel.items()) if v}
         return render_template("events.html", evs=evs, season=season, around=around, active_nav="events")
 
-    # Overlays on the core timeline (bars at W=3 per month from X0=52).
+    # Overlays on the core timeline (bars at W=3 per month from X0=52), on by default there.
     def timeline_hook():
-        return {"event_marks": overlay(lambda y, m: 52 + ((y - 1993) * 12 + m - 1) * 3 + 1
-                                       if (1993, 1) <= (y, m) <= (2021, 5) else None)}
+        marks = overlay(lambda y, m: 52 + ((y - 1993) * 12 + m - 1) * 3 + 1
+                        if (1993, 1) <= (y, m) <= (2021, 5) else None, default=True)
+        months = app.cached("month_counts_ev", lambda: {(r[0], r[1]): r[2] for r in app.con().execute(
+            "SELECT year, month, COUNT(*) FROM main.messages GROUP BY year, month")})
+        for e in marks:
+            year = [v for (y, _), v in months.items() if y == e["year"]]
+            avg = sum(year) / len(year) if year else 0
+            e["ratio"] = months.get((e["year"], e["month"]), 0) / avg if avg else None
+        return {"event_marks": marks}
 
     app.hooks["timeline"].append(timeline_hook)

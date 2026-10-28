@@ -246,7 +246,32 @@ def _evaluate(db, pred: dict, hand: dict) -> None:
 
 TITLE_CLEAN = re.compile(r"^\s*(re|fwd?|fw)\s*:\s*|\b(job|position|posting|announcement|opening|ad)s?\s*[:\-–]\s*", re.I)
 INSTITUTION = re.compile(
-    r"((?:[A-Z][\w.&'-]*[ \t]+){0,5}(?:University|College|Institute|Polytechnic)(?:[ \t]+(?:of|at|in|the|[A-Z][\w.&'-]*)){0,5})")
+    r"((?:[A-Z][\w.&'-]*[ \t]+){0,5}(?:University|College|Institute|Polytechnic)"
+    r"(?:[ \t]+(?:of|at|in)(?:[ \t]+(?:of|at|in|the|and|[A-Z][\w.&'-]*)){1,7})?"
+    r"(?:[ \t]*[,–-][ \t]*[A-Z][a-z]+\b(?:[ \t][A-Z][a-z]+\b)?(?![ \t]+[A-Z]))?)")
+# A candidate made only of these words names a kind of school, or a unit inside
+# one ("College of Arts and Sciences", "University of"), not an institution.
+GENERIC_WORDS = {"university", "college", "institute", "polytechnic", "school", "community", "state",
+                 "of", "at", "in", "the", "and", "for", "&", "arts", "sciences", "science", "liberal",
+                 "humanities", "letters", "education", "english", "writing", "department", "studies",
+                 "graduate", "business", "engineering", "technology", "professional", "applied"}
+NOT_A_SCHOOL = re.compile(r"^(College (English|Composition)|University (Press|Writing))")
+
+
+def institution_candidates(text: str) -> list[str]:
+    """Every institution-like name in a job ad's head, in order, generic ones dropped."""
+    out = []
+    for m in INSTITUTION.finditer(text):
+        # "College of Liberal Arts at Auburn University" is a unit and its school.
+        for piece in re.split(r"\s+at\s+(?=(?:the\s+)?(?:[A-Z][\w.&'-]*\s+){0,5}(?:University|College|Institute))", m.group(0)):
+            name = re.sub(r"^(The|At|In|An?)\s+", "", piece.strip(" ,.;:-–"))
+            name = re.sub(r"\s+(of|at|in|the|and|for)$", "", name)
+            words = re.findall(r"[\w&'-]+", name.lower())
+            if not words or set(words) <= GENERIC_WORDS or NOT_A_SCHOOL.match(name):
+                continue
+            if name not in out:
+                out.append(name)
+    return out[:8]
 
 
 def rank_type(text: str) -> str:
@@ -267,15 +292,16 @@ def rank_type(text: str) -> str:
 def _jobs(db, has_fresh) -> None:
     db.executescript("""
         DROP TABLE IF EXISTS jobs;
-        CREATE TABLE jobs (uid TEXT PRIMARY KEY, institution TEXT, title TEXT, rank_type TEXT, posted_at TEXT, year INTEGER);
+        CREATE TABLE jobs (uid TEXT PRIMARY KEY, institution TEXT, title TEXT, rank_type TEXT, posted_at TEXT, year INTEGER,
+                           candidates TEXT, unitid INTEGER);
     """)
     out = []
     for uid, subject, body, sent_at, year in db.execute(
             f"SELECT uid, subject, {'body_fresh' if has_fresh else 'body'}, sent_at, year FROM messages "
             f"WHERE genre = 'job' AND subject NOT LIKE 'Re:%'"):
         head = f"{subject}\n{(body or '')[:1200]}"
-        inst = next((m.group(0).strip(" ,.;:") for m in INSTITUTION.finditer(head)
-                     if not re.match(r"^(College (English|Composition)|University (Press|Writing))", m.group(0).strip())), "")
+        cands = institution_candidates(head)
         title = TITLE_CLEAN.sub("", subject or "").strip(" -–:") or subject
-        out.append((uid, inst, title[:200], rank_type(head), sent_at, year))
-    db.executemany("INSERT INTO jobs VALUES (?,?,?,?,?,?)", out)
+        # The institutions stage sets unitid from the first candidate that matches IPEDS.
+        out.append((uid, cands[0] if cands else "", title[:200], rank_type(head), sent_at, year, "|".join(cands), None))
+    db.executemany("INSERT INTO jobs VALUES (?,?,?,?,?,?,?,?)", out)

@@ -7,7 +7,7 @@
   <h1>{{ MONTHS[month] }} {{ year }}</h1>
   <span class="result-count">{{ "{:,}".format(n) }} messages</span>
 </div>
-<p class="meta">Threads are listed by their first message this month; counts are for this month only.</p>
+<p class="meta">Threads are listed by the date of their first message this month. The counts only include this month's messages, so a thread that kept going into the next month shows up there as well.</p>
 <ol class="entries">
 {% for r in rows %}
   <li class="entry">

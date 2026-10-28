@@ -1,0 +1,48 @@
+{# The events overlay, shared by the timeline and trends charts.
+
+   event_band draws inside a chart's <svg>: a faint guide line up through the
+   plot for each numbered event, a wide hover target around it, a row of small
+   diamonds for the CCCC conventions, and a numbered marker per other event,
+   dropped to a second lane when it would sit on top of its neighbour.
+   event_key is the list under the chart that says what each number was. #}
+
+{% macro event_band(marks, top, base, row) -%}
+{% if marks %}
+<g class="events">
+  {% for e in marks if e.n is none %}
+    <g class="ev-cccc" data-tip-title="{{ e.label }}" data-tip="{{ e.when }}">
+      <rect class="ev-hit" x="{{ e.x - 6 }}" y="{{ row - 9 }}" width="12" height="18"></rect>
+      <path class="ev-diamond" d="M{{ e.x }} {{ row - 6 }} l6 6 l-6 6 l-6 -6 z"></path>
+    </g>
+  {% endfor %}
+  {% set ns = namespace(last=-100) %}
+  {% for e in marks if e.n is not none %}
+    {% set lane = 1 if e.x - ns.last < 28 else 0 %}{% if lane == 0 %}{% set ns.last = e.x %}{% endif %}
+    {% set cy = row + 26 + lane * 26 %}
+    <g class="ev-num" data-tip-title="{{ e.n }}. {{ e.label }}" data-tip="{{ e.kind }} · {{ e.when }}">
+      <rect class="ev-hit" x="{{ e.x - 6 }}" y="{{ top }}" width="12" height="{{ cy - top + 12 }}"></rect>
+      <line class="ev-guide" x1="{{ e.x }}" x2="{{ e.x }}" y1="{{ top }}" y2="{{ cy - 11 }}"></line>
+      <circle class="ev-dot" cx="{{ e.x }}" cy="{{ cy }}" r="11"></circle>
+      <text class="ev-n" x="{{ e.x }}" y="{{ cy + 4.5 }}" text-anchor="middle">{{ e.n }}</text>
+    </g>
+  {% endfor %}
+</g>
+{% endif %}
+{%- endmacro %}
+
+{% macro event_key(marks, months_link=True) -%}
+{% set numbered = marks|selectattr('n')|list %}
+{% if marks %}
+<div class="ev-key">
+  <ol>
+  {% for e in numbered %}
+    <li value="{{ e.n }}"><span class="ev-when">{{ MONTHS[e.month][:3] }} {{ e.year }}</span>
+      {{ e.label }} <span class="meta">({{ e.kind|lower }})</span>{% if months_link %}
+      <span class="ev-vol">{% if e.ratio %}{{ '%.1f'|format(e.ratio) }}× &middot; {% endif %}<a href="{{ url_for('month_view', year=e.year, month=e.month) }}">read {{ MONTHS[e.month] }}</a></span>{% endif %}</li>
+  {% endfor %}
+  </ol>
+  {% if numbered and numbered[0].ratio %}<p class="meta">The figure after each event is how busy the list was that month compared with an average month of the same year (1.0× is typical).</p>{% endif %}
+  {% if marks|rejectattr('n')|list %}<p class="meta"><svg class="ev-swatch" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0 l6 6 l-6 6 l-6 -6 z"></path></svg> CCCC, each spring (hover a diamond for the city). The <a href="{{ url_for('events_page') }}">Events page</a> shows how the list's volume moves in the months around it.</p>{% endif %}
+</div>
+{% endif %}
+{%- endmacro %}

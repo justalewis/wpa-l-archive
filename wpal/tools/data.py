@@ -88,8 +88,8 @@ def register(app) -> None:
                              mimetype="application/zip", max_age=3600)
         bulk.build_in_background(app.config["ARCHIVE"], app.config["REQUESTS"], request.url_root, key)
         return render_template("error.html", code="Preparing the download",
-                               msg="The full dataset is being packaged. That takes a few minutes the first time "
-                                   "after an update. Reload this page to check; the download starts when it's ready."), 202
+                               msg="The full dataset is being packaged right now. The first download after an update takes "
+                                   "a few minutes, so reload this page in a bit and the download will start."), 202
 
     # ---- corpora -----------------------------------------------------------
 
@@ -114,7 +114,7 @@ def register(app) -> None:
         cid = "".join(secrets.choice(string.ascii_lowercase + string.digits) for _ in range(10))
         with dbmod.state(app.config["REQUESTS"]) as st:
             if not allow_write(st, "corpus", CORPORA_PER_HOUR):
-                return render_template("error.html", code=429, msg="Too many saved searches from here this hour."), 429
+                return render_template("error.html", code=429, msg="That's a lot of saved searches from here this hour. Please try again a little later."), 429
             st.execute("INSERT INTO corpora (id, name, description, query_json, uids_json, n, build_id) VALUES (?,?,?,?,?,?,?)",
                        (cid, name, (request.form.get("description") or "").strip()[:1000],
                         json.dumps(f.as_dict()), json.dumps(uids), len(uids), build_id()))

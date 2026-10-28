@@ -122,7 +122,7 @@ def test_suppression_by_name_hides_poster_everywhere(client, paths):
     assert b"Avery Quill" not in client.get("/search?from=Quill").data
     # Suppressed posters stay in anonymous totals (PLAN.md, decision 1).
     total = one(db, "SELECT COUNT(*) FROM messages")[0]
-    assert f"{total:,} messages".encode() in client.get("/").data
+    assert f"{total:,} in all".encode() in client.get("/").data
 
 
 def test_suppression_by_poster_key(client, paths):
@@ -149,7 +149,7 @@ def test_optout_records_request(client, paths):
 def test_optout_rejects_missing_fields_and_bad_token(client, paths):
     _, req = paths
     r = client.post("/opt-out", data={"csrf": "wrong", "name_as_posted": "", "contact": ""})
-    assert r.status_code == 200 and b"expired" in r.data
+    assert r.status_code == 200 and b"timed out" in r.data
     assert one(req, "SELECT COUNT(*) FROM optout_requests")[0] == 0
 
 

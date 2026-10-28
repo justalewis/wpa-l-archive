@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Events</h1>
-  <p class="lede">The field's calendar, for reading the list's rhythms against it. Turn the overlay on from the <a href="{{ url_for('timeline', events=1) }}">timeline</a> or <a href="{{ url_for('trends', terms='assessment', events=1) }}">trends</a>.</p>
+  <p class="lede">The field's calendar, set next to the list so you can see how the two line up: CCCC every spring, the major position statements, the list's own move, and a few outside events. The same events appear as numbered markers on the <a href="{{ url_for('timeline') }}">timeline</a>, and you can switch them on in <a href="{{ url_for('trends', terms='assessment', events=1) }}">Trends</a> too.</p>
 </div>
 
 <h2 class="section-head">The year's rhythm</h2>
@@ -46,6 +46,6 @@
 </table>
 <details class="methodology-section">
   <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} How the calendar is kept</summary>
-  <div class="methodology-body"><p>Events live in a plain file in the build (<code>decisions/events.yaml</code>); adding one is a one-line change and a rebuild. Each CCCC convention's host city was checked against the list's own messages that year, and its source links to that search. Months are approximate unless a day is given.</p></div>
+  <div class="methodology-body"><p>The events live in a plain file in the build (<code>decisions/events.yaml</code>), so adding one takes a one-line change and a rebuild. Each CCCC host city was checked against the list's own messages from that year, and its source link goes to that search. Months are approximate unless a day is given.</p></div>
 </details>
 {% endblock %}

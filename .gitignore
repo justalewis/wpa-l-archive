@@ -4,3 +4,6 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+
+# Unpublished drafts stay local
+drafts/

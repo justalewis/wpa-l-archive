@@ -52,7 +52,7 @@ def test_points_link_to_the_right_messages(app):
     hit = c.get("/search?q=doctoral&start=2020&end=2020&month=3").data.decode()
     assert "Contacting an Admin" in hit
     miss = c.get("/search?q=doctoral&start=2020&end=2020&month=4").data.decode()
-    assert "No messages matched" in miss
+    assert "Nothing matched that search" in miss
 
 
 def test_six_terms_at_most_and_empty_state(app):

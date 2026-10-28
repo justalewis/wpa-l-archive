@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Participation</h1>
-  <p class="lede">Who held the conversation, who joined, who stayed, and how concentrated the list's voice was. These describe activity, not standing.</p>
+  <p class="lede">Who carried the conversation, who joined, who stayed, and how much of the list's talk came from a small group of regulars. Everything here describes activity on the list. None of it measures anyone's standing in the field.</p>
 </div>
 
 <form class="viz-controls" method="get">
@@ -25,7 +25,7 @@
       {% else %}<circle class="node anon" cx="{{ n.x }}" cy="{{ n.y }}" r="{{ n.r }}" data-tip="a poster without a public page"></circle>{% endif %}
     {% endfor %}
   </svg>
-  <p class="viz-note">The {{ graph.nodes|length }} posters with the most reply exchanges in {{ era }}, placed so that people who replied to each other often sit close together. Lines show pairs with at least {{ edge_min }} exchanges. Named points are people with public pages; unlabeled points are people who posted fewer than 25 messages in all.{% if n_hidden %} {{ n_hidden }} withdrawn {{ "person is" if n_hidden == 1 else "people are" }} left out.{% endif %}</p>
+  <p class="viz-note">The {{ graph.nodes|length }} posters with the most reply exchanges in {{ era }}, arranged so that people who often replied to each other sit close together. Lines connect pairs with at least {{ edge_min }} exchanges. Named points are people with public pages, and the unlabeled ones posted fewer than 25 messages in all.{% if n_hidden %} {{ n_hidden }} withdrawn {{ "person is" if n_hidden == 1 else "people are" }} left out.{% endif %}</p>
 </figure>
 {% else %}<div class="viz-empty">{{ ic('ic-network', 'ic-absent') }} No network for this era.</div>{% endif %}
 
@@ -35,7 +35,7 @@
   <thead><tr><th scope="col">Person</th><th scope="col">Messages</th><th scope="col">Started</th><th scope="col">People replied with</th><th scope="col">Betweenness</th><th scope="col">Core</th></tr></thead>
   <tbody>{% for r in top %}<tr><td class="l"><a href="{{ url_for('person', pid=r.person_id) }}">{{ r.display_name }}</a></td><td>{{ r.posts }}</td><td>{{ r.started }}</td><td>{{ r.degree }}</td><td>{{ '%.3f'|format(r.betweenness) }}</td><td>{{ r.core }}</td></tr>{% endfor %}</tbody>
 </table>
-<p class="meta">Betweenness: how often a person sits on the shortest path between two others in the network of 3+ exchanges (sampled, seeded). Core: the k-core number, a measure of how deep in the dense center a person sits.</p>
+<p class="meta">Betweenness is how often a person sits on the shortest path between two others in the network of 3+ exchanges (estimated from a seeded sample). Core is the k-core number, which says how far into the network's dense center a person sits.</p>
 {% endif %}
 
 <h2 class="section-head">How concentrated was the list's voice?</h2>
@@ -54,7 +54,7 @@
 </figure>
 
 <h2 class="section-head">Who stayed?</h2>
-<p class="meta">Posters grouped by the year of their first message; the share who posted again at least 1, 3 or 5 years later. Cohorts whose window runs past 2020 are left blank.</p>
+<p class="meta">Posters are grouped by the year of their first message, and each column shows the share who posted again at least 1, 3 or 5 years later. Cohorts whose window runs past 2020 are left blank, since the archive ends before their window does.</p>
 <table class="data">
   <thead><tr><th scope="col">First posted</th><th scope="col">Newcomers</th><th scope="col">After 1 year</th><th scope="col">3 years</th><th scope="col">5 years</th></tr></thead>
   <tbody>{% for y, c in cohorts.items() %}<tr><th scope="row">{{ y }}</th><td>{{ c.size }}</td>{% for k in (1, 3, 5) %}<td>{{ '%.0f%%'|format(c[k] * 100) if k in c else '–' }}</td>{% endfor %}</tr>{% endfor %}</tbody>

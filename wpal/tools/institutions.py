@@ -58,9 +58,8 @@ def register(app) -> None:
             WHERE pi.unitid = ? ORDER BY pi.first_at""", (unitid,)) if r["person_id"] in pub]
         n_people = con.execute("SELECT COUNT(*) FROM person_institutions WHERE unitid = ?", (unitid,)).fetchone()[0]
         names = [r[0] for r in con.execute("SELECT name FROM institution_aliases WHERE unitid = ?", (unitid,))]
-        jobs = con.execute(
-            f"SELECT j.*, v.subject FROM jobs j JOIN visible v ON v.uid = j.uid WHERE j.institution IN "
-            f"({','.join('?' * len(names))}) ORDER BY j.posted_at", names).fetchall() if names else []
+        jobs = con.execute("SELECT j.*, v.subject FROM jobs j JOIN visible v ON v.uid = j.uid WHERE j.unitid = ? "
+                           "ORDER BY j.posted_at", (unitid,)).fetchall()
         per_year = dict(con.execute("""
             SELECT m.year, COUNT(*) FROM main.messages m JOIN person_institutions pi ON pi.person_id = m.person_id
             WHERE pi.unitid = ? AND substr(m.sent_at, 1, 10) BETWEEN substr(pi.first_at, 1, 10) AND substr(pi.last_at, 1, 10)

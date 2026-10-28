@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Genres</h1>
-  <p class="lede">What kind of message the list carried, year by year: the drift from discussion toward announcements, calls and job ads. Shares of each year's messages.</p>
+  <p class="lede">What kinds of messages the list carried, year by year. Over time the mix drifted away from discussion and toward announcements, calls for papers and job ads, and each bar shows how one year's messages split up.</p>
 </div>
 <p class="meta">{{ ic('ic-job', 'ic-sm ic-quiet') }} <a href="{{ url_for('jobs') }}">Job ads by year and kind</a></p>
 
@@ -28,7 +28,7 @@
     {% for y in range(1993, 2022, 4) %}<text x="{{ X0 + (y - 1993) * BW + BW / 2 }}" y="{{ TOP + H + 18 }}" text-anchor="middle">{{ y }}</text>{% endfor %}
   </svg>
   <div class="viz-legend">{% for g in GENRE_ORDER %}<span class="key"><span class="swatch sw-{{ 'cat-' ~ loop.index if loop.index <= 8 else 'cat-other' }}"></span>{{ GENRE_NAMES[g] }}</span>{% endfor %}</div>
-  <p class="viz-note">Each bar is one year's messages. Select a segment to open those messages. Counts include withdrawn posters' messages, anonymously.</p>
+  <p class="viz-note">Each bar is one year's messages, and clicking a segment opens those messages. Withdrawn posters' messages are still counted here, anonymously.</p>
 </figure>
 
 <table class="data">
@@ -44,7 +44,7 @@
     <p>How each message got its label:
       {% for s in sources %}{{ s.src }} {{ "{:,}".format(s.n) }}{{ ", " if not loop.last }}{% endfor %}.</p>
     {% if evals %}
-    <p><b>Evaluation.</b> A stratified sample of {{ evals|sum(attribute='support') }} messages (mostly thread starters, across three eras) was coded by hand and held out from training. The coder was {{ evals[0].coder }}. The rules were revised once after a first look at these results, so the figures below are somewhat optimistic; a fresh sample coded by a person would give a fairer measure.</p>
+    <p><b>Evaluation.</b> A stratified sample of {{ evals|sum(attribute='support') }} messages (mostly thread starters, across three eras) was labeled for evaluation and kept out of training. The labels were made by {{ evals[0].coder }}. The rules were revised once after a first look at these results, so the figures below are somewhat optimistic, and a fresh sample labeled by a person would give a fairer measure.</p>
     <table class="data">
       <thead><tr><th scope="col">Genre</th><th scope="col">Precision</th><th scope="col">Recall</th><th scope="col">Hand-coded</th><th scope="col">Predicted</th></tr></thead>
       <tbody>{% for e in evals %}<tr><td class="l">{{ GENRE_NAMES.get(e.label, e.label) }}</td>

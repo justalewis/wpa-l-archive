@@ -1,0 +1,117 @@
+/* ============================================================
+   The retro skin: the list as its LISTSERV web archive showed it.
+   White page, Times for prose, Courier for messages, Arial for
+   chrome, browser-blue underlined links, grey bevelled buttons and
+   ruled tables. Switched on by the "Retro view" button (site.js),
+   which sets data-skin="listserv" on <html>; figure-head.js applies a
+   saved choice before first paint. Always light: the skin outranks
+   both figure settings, so its selectors carry an extra :not() to
+   beat tokens.css's dark rules on specificity.
+   ============================================================ */
+
+:root[data-skin="listserv"]:not([data-x]) {
+  --papyrus: #FFFFFF; --papyrus-deep: #E8E8E8; --paper: #FFFFFF;
+  --gloss: #000000; --gloss-soft: #000000;
+  --dilute: #444444; --dilute-light: #6E6E6E;
+  --terracotta: #0000EE; --terracotta-lift: #551A8B; --terracotta-wash: #E4E4F7;
+  --added-white: #FFFFFF;
+  --faience: #336699; --faience-wash: #E3EAF2;
+  --rule: #A0A0A0; --rule-strong: #707070;
+  --good-bg: #E8E8E8; --good-fg: #000000; --warn-bg: #FFFFCC; --warn-fg: #000000;
+  --err-bg: #FFE0E0; --err-fg: #990000; --neutral-bg: #E8E8E8; --neutral-fg: #000000;
+  --f-display: Arial, Helvetica, sans-serif;
+  --f-quote: 'Times New Roman', Times, serif;
+  --f-body: 'Times New Roman', Times, serif;
+  --f-ui: Arial, Helvetica, sans-serif;
+  --f-mono: 'Courier New', Courier, monospace;
+  --cat-1: #A8462C; --cat-2: #008B78; --cat-3: #B0821A; --cat-4: #5A57A8;
+  --cat-5: #3E7D2A; --cat-6: #8A3A73; --cat-7: #1466A0; --cat-8: #A83A5C; --cat-other: #8C8271;
+  --chart-ink: #000000; --chart-muted: #444444; --chart-grid: #D0D0D0;
+  --chart-surface: #FFFFFF; --chart-halo: #FFFFFF;
+  color-scheme: light;
+}
+
+/* Square, flat, instant. */
+[data-skin="listserv"] *, [data-skin="listserv"] *::before, [data-skin="listserv"] *::after {
+  border-radius: 0 !important; box-shadow: none !important; transition: none !important;
+}
+[data-skin="listserv"] body { background: #FFFFFF; color: #000; font-size: 16px; }
+[data-skin="listserv"] .ic { display: none; }
+
+[data-skin="listserv"] a { color: #0000EE; text-decoration: underline; }
+[data-skin="listserv"] a:visited { color: #551A8B; }
+[data-skin="listserv"] a:hover { color: #FF0000; }
+
+[data-skin="listserv"] h1, [data-skin="listserv"] h2, [data-skin="listserv"] h3,
+[data-skin="listserv"] .page-head h1 {
+  font-family: Arial, Helvetica, sans-serif; font-weight: bold; letter-spacing: 0; color: #000;
+}
+[data-skin="listserv"] .page-head h1 { font-size: 1.6rem; }
+[data-skin="listserv"] .section-head { font-size: 1.15rem; border-bottom: 1px solid #A0A0A0; }
+
+/* The left frame: a grey index column. */
+[data-skin="listserv"] .capsa { background: #E8E8E8; border-right: 1px solid #A0A0A0; }
+[data-skin="listserv"] .wordmark .name { font: bold 1.05rem Arial, Helvetica, sans-serif; color: #000; }
+[data-skin="listserv"] .wordmark .sub { font: 0.8rem Arial, Helvetica, sans-serif; color: #444; }
+[data-skin="listserv"] .nav-link { font: 0.9rem Arial, Helvetica, sans-serif; padding: 1px 0; background: none; }
+[data-skin="listserv"] .nav-link .nav-label { color: #0000EE; text-decoration: underline; }
+[data-skin="listserv"] .nav-link[aria-current="page"] .nav-label { color: #000; font-weight: bold; text-decoration: none; }
+[data-skin="listserv"] .tag { font-family: Arial, Helvetica, sans-serif; }
+
+/* Grey bevelled controls. */
+[data-skin="listserv"] .btn, [data-skin="listserv"] button, [data-skin="listserv"] .btn-quiet,
+[data-skin="listserv"] .figure-toggle, [data-skin="listserv"] .skin-toggle {
+  background: #D4D0C8; color: #000; border: 2px outset #F4F4F4; font: 13px Arial, Helvetica, sans-serif;
+  padding: 2px 10px; text-decoration: none;
+}
+[data-skin="listserv"] .btn:active, [data-skin="listserv"] button:active { border-style: inset; }
+[data-skin="listserv"] input[type="text"], [data-skin="listserv"] input[type="search"],
+[data-skin="listserv"] select, [data-skin="listserv"] textarea {
+  background: #FFF; color: #000; border: 2px inset #E0E0E0; font: 13px Arial, Helvetica, sans-serif;
+}
+[data-skin="listserv"] .sift, [data-skin="listserv"] .viz-controls {
+  background: #F0F0F0; border: 1px solid #A0A0A0; padding: 6px 8px;
+}
+
+/* Ruled tables with grey header cells. */
+[data-skin="listserv"] table.data { border-collapse: collapse; border: 1px solid #808080; font: 13px Arial, Helvetica, sans-serif; }
+[data-skin="listserv"] table.data th, [data-skin="listserv"] table.data td { border: 1px solid #C0C0C0; padding: 2px 6px; }
+[data-skin="listserv"] table.data thead th { background: #CCCCCC; color: #000; }
+[data-skin="listserv"] .vol-grid td, [data-skin="listserv"] .vol-grid th { border: 1px solid #C0C0C0; font-family: Arial, Helvetica, sans-serif; }
+
+/* Index lists read as plain lines. */
+[data-skin="listserv"] .entry { padding: 3px 0; border: 0; }
+[data-skin="listserv"] .entry-meta { font: 12px Arial, Helvetica, sans-serif; color: #444; }
+[data-skin="listserv"] .entry-title { font: 15px 'Times New Roman', Times, serif; }
+[data-skin="listserv"] .lede { font: 16px/1.4 'Times New Roman', Times, serif; color: #000; }
+[data-skin="listserv"] .meta, [data-skin="listserv"] .viz-note { font-family: Arial, Helvetica, sans-serif; color: #444; }
+
+/* Messages: a header block over a monospaced body. */
+[data-skin="listserv"] .msg { border-top: 2px solid #808080; padding-top: 6px; margin-top: 18px; background: none; }
+[data-skin="listserv"] .msg-head { display: none; }
+[data-skin="listserv"] .msg > .subj { display: none; }
+[data-skin="listserv"] .msg-body {
+  font: 13px/1.35 'Courier New', Courier, monospace; white-space: pre-wrap; max-width: 80ch; color: #000;
+}
+[data-skin="listserv"] .msg-body details.quoted summary { font: 12px Arial, Helvetica, sans-serif; color: #444; }
+[data-skin="listserv"] .msg-body details.quoted .q { border-left: 0; color: #000; font-family: 'Courier New', Courier, monospace; }
+[data-skin="listserv"] .cite-box, [data-skin="listserv"] .methodology-section {
+  background: #F0F0F0; border: 1px solid #A0A0A0;
+}
+
+.retro-only { display: none; }
+[data-skin="listserv"] .retro-only { display: block; }
+[data-skin="listserv"] table.retro-only { display: table; }
+[data-skin="listserv"] .modern-only { display: none; }
+
+table.lsv-head { border-collapse: collapse; font: 13px Arial, Helvetica, sans-serif; margin-bottom: 8px; }
+table.lsv-head th { text-align: right; vertical-align: top; padding: 1px 8px 1px 0; font-weight: bold; white-space: nowrap; }
+table.lsv-head td { padding: 1px 0; }
+.lsv-nav { font: 13px Arial, Helvetica, sans-serif; margin: 6px 0; }
+
+.retro-banner { background: #336699; color: #FFF; font-family: Arial, Helvetica, sans-serif; padding: 6px 12px; }
+.retro-banner b { font-size: 1.15rem; }
+.retro-banner span { font-size: 0.8rem; margin-left: 10px; }
+[data-skin="listserv"] .retro-banner { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 0; }
+[data-skin="listserv"] .draft-banner { background: #FFFFCC; color: #000; border-bottom: 1px solid #A0A0A0; font: 12px Arial, Helvetica, sans-serif; }
+[data-skin="listserv"] .column-foot { font: 12px Arial, Helvetica, sans-serif; border-top: 1px solid #A0A0A0; }

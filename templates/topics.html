@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Topics</h1>
-  <p class="lede">What the list talked about, found by a topic model rather than chosen in advance: {{ rows|length }} topics across {{ "{:,}".format(run.n_docs) }} threads, each with its share of the year's threads. Labels marked “auto” are the model's top words, not yet named by a person.</p>
+  <p class="lede">What the list talked about, found by a topic model instead of a set of search terms picked in advance: {{ rows|length }} topics across {{ "{:,}".format(run.n_docs) }} threads, each drawn as its share of the year's threads. Labels marked “auto” are the model's own top words, and nobody has named those topics yet.</p>
 </div>
 <div class="sift"><div class="sift-row"><span class="sift-label">Sort</span>
   {% for k, l in [("size", "Largest"), ("peak", "When it peaked"), ("label", "Label")] %}{% if sort == k %}<b>{{ l }}</b>{% else %}<a href="?sort={{ k }}">{{ l }}</a>{% endif %} {% endfor %}
@@ -20,7 +20,7 @@
   </a>
 {% endfor %}
 </div>
-<p class="viz-note">All panels share one scale: the tallest point is {{ '%.1f'|format(peak * 100) }}% of a year's threads. 1993 at left, 2021 at right.</p>
+<p class="viz-note">Every panel uses the same scale, so the tallest point anywhere is {{ '%.1f'|format(peak * 100) }}% of a year's threads. Each line runs from 1993 on the left to 2021 on the right.</p>
 <details class="methodology-section">
   <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} Model and reproducibility</summary>
   <div class="methodology-body">

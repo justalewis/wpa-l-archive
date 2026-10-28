@@ -44,7 +44,7 @@
       <div class="f"><label for="cdesc">Description (optional)</label><textarea id="cdesc" name="description" rows="2" maxlength="1000"></textarea></div>
       <button class="btn" type="submit">Save as a corpus</button>
     </form>
-    <p class="meta">A saved corpus freezes the ids of these messages with today's build and gets a permanent URL. Or download them now:
+    <p class="meta">Saving a corpus freezes the ids of these messages against today's build and gives them a permanent URL you can cite. You can also download them right now:
       <a href="{{ url_for('export', format='csv', **filters.as_dict()) }}">CSV</a> ·
       <a href="{{ url_for('export', format='jsonl', **filters.as_dict()) }}">JSONL</a> ·
       pseudonymized <a href="{{ url_for('export', format='csv', pseudo=1, **filters.as_dict()) }}">CSV</a>.</p>
@@ -90,7 +90,7 @@
 {% endfor %}
 </ol>
 {% elif not error %}
-<div class="empty"><p>{{ ic('ic-search', 'ic-absent') }} No messages matched.</p></div>
+<div class="empty"><p>{{ ic('ic-search', 'ic-absent') }} Nothing matched that search. Try fewer words, or check the spelling.</p></div>
 {% endif %}
 
 {% if page > 1 or more %}

@@ -36,17 +36,17 @@
       <thead><tr><th scope="col">Institution</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Sigs</th></tr></thead>
       <tbody>{% for a in affs %}<tr><td class="l">{{ a.institution }}</td><td>{{ a.first_at|when("%Y") }}</td><td>{{ a.last_at|when("%Y") }}</td><td>{{ a.n }}</td></tr>{% endfor %}</tbody>
     </table>
-    {% else %}<p class="meta">{{ ic('ic-institution', 'ic-sm ic-absent') }} No institution recurs in this person's signatures.</p>{% endif %}
+    {% else %}<p class="meta">{{ ic('ic-institution', 'ic-sm ic-absent') }} None of this person's signatures name the same institution more than once.</p>{% endif %}
   </section>
 </div>
 
 <h2 class="section-head">{{ ic('ic-network', 'ic-sm ic-quiet') }} Most frequent exchanges</h2>
 {% if partners %}
-<p class="meta">People this person replied to, or who replied to them, at least {{ edge_min }} times. Before 2010 many reply links are inferred from subject lines, so treat these counts as approximate.</p>
+<p class="meta">People this person replied to, or heard back from, at least {{ edge_min }} times. Before 2010 a lot of reply links had to be inferred from subject lines, so read these counts as approximate.</p>
 <table class="data">
   <tbody>{% for r in partners %}<tr><td class="l">{{ who(names.get(r.other, ''), r.other) }}</td><td>{{ r.n }}</td></tr>{% endfor %}</tbody>
 </table>
-{% else %}<p class="meta">{{ ic('ic-network', 'ic-sm ic-absent') }} No exchange with another listed person reaches {{ edge_min }} replies.</p>{% endif %}
+{% else %}<p class="meta">{{ ic('ic-network', 'ic-sm ic-absent') }} This person doesn't have {{ edge_min }} or more exchanges with anyone else who has a page here.</p>{% endif %}
 
 <h2 class="section-head">Recent messages</h2>
 <ol class="entries">
@@ -62,8 +62,8 @@
 <details class="methodology-section">
   <summary class="methodology-summary">{{ ic('ic-method', 'ic-sm ic-quiet') }} How this page is made</summary>
   <div class="methodology-body">
-    <p>Messages are grouped into one person when they came from the same address (the address itself is not kept), or when the names on two addresses normalize to the same first and last name. Merges by name can join two different people who share a name; corrections are recorded in the build's decision files and survive rebuilds.</p>
-    <p>Affiliations are institution names that recur in this person's signature blocks, with the first and last year each appears. Pages exist only for people with at least 25 messages, and anyone can withdraw theirs through the opt-out form.</p>
+    <p>Messages are grouped under one person when they came from the same email address (the address itself isn't kept), or when the names on two addresses come down to the same first and last name. Grouping by name can join two different people who happen to share one. When someone reports a mix-up like that, the fix goes into the build's decision files, so it holds through every rebuild.</p>
+    <p>Affiliations are institution names that keep turning up in this person's signature blocks, with the first and last year each one appears. Only people with at least 25 messages get a page, and anyone can withdraw theirs through the opt-out form.</p>
   </div>
 </details>
 {% endblock %}

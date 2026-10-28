@@ -4,8 +4,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Data and export</h1>
-  <p class="placeholder">[Draft placeholder. Working documentation; public wording to come.]</p>
-  <p class="lede">How the archive is built, what an export contains, how to save a search as a citable corpus, and the read-only API.</p>
+  <p class="lede">Everything you need to work with the archive on your own: where the data came from, how to cite it, the whole dataset as a download, what's in an export, and the read-only API.</p>
 </div>
 
 <h2 class="section-head">Provenance</h2>
@@ -13,18 +12,18 @@
   <tbody>
     <tr><th scope="row">Source</th><td class="l">Internet Archive item <code>WPA-L-1993-2021-Complete-Uncompresse</code>, public-domain mark: 341 monthly LISTSERV logs, January 1993 to May 2021, each checked against the item's published MD5.</td></tr>
     <tr><th scope="row">This build</th><td class="l"><code>{{ build }}</code>{% if meta.stages_at %}; stages re-run {{ meta.stages_at }}{% endif %}</td></tr>
-    <tr><th scope="row">Processing</th><td class="l">Messages split from the logs; email addresses removed everywhere; attachments dropped; threads rebuilt; posters grouped into persons. The build code and its decision files are versioned with the reader.</td></tr>
+    <tr><th scope="row">Processing</th><td class="l">The logs are split into messages, every email address is removed, attachments are dropped, threads are rebuilt, and each poster's addresses and name spellings are grouped into one person. The code that does this, and the decision files that correct it, are versioned along with the reader.</td></tr>
   </tbody>
 </table>
 
 <h2 class="section-head">How to cite the archive</h2>
 <p class="cite">WPA-L Archive Reader. Built from <i>WPA-L Archive 1993–2021 Complete Uncompressed</i>, Internet Archive, 2021. Build {{ build }}. {{ url_for('home', _external=True) }}</p>
-<p class="meta">Each message page gives MLA 9 and APA 7 citations for that message. Cite a saved corpus by its URL and the build date shown on it.</p>
+<p class="meta">Every message page has MLA 9 and APA 7 citations for that message. To cite a saved corpus, use its URL and the build date shown on it.</p>
 
 <h2 class="section-head" id="download">{{ ic('ic-data', 'ic-sm ic-quiet') }} Download everything</h2>
-<p>The whole archive as one zip of spreadsheet-ready CSV files: every public message, one file per year (the fields below plus <code>parent_id</code>), and tables for {{ bundle_files|map('replace', '.csv', '')|map('replace', '_', ' ')|join(', ') }}. A README inside describes each file and its ids. The files open in Excel, Google Sheets, R or Python.</p>
+<p>If you'd like the whole archive to work with, it comes as one zip of CSV files: every public message, one file per year (the fields below plus <code>parent_id</code>), and tables for {{ bundle_files|map('replace', '.csv', '')|map('replace', '_', ' ')|join(', ') }}. A README inside explains each file and its ids, and everything opens in Excel, Google Sheets, R or Python.</p>
 <p><a class="btn" href="{{ url_for('data_download') }}">Download the dataset (.zip{% if bundle_mb %}, {{ "%.0f"|format(bundle_mb) }} MB{% endif %})</a></p>
-<p class="meta">Withdrawn posters' messages are left out, as everywhere else here. The file is rebuilt after each update to the archive and after each withdrawal. You'll be asked to accept the terms below first.</p>
+<p class="meta">Messages from anyone who has withdrawn are left out, here as everywhere else. The zip is rebuilt whenever the archive is updated or someone withdraws, and you'll be asked to accept the terms below before it downloads.</p>
 
 <h2 class="section-head" id="fields">{{ ic('ic-data', 'ic-sm ic-quiet') }} Export fields</h2>
 <table class="data">
@@ -41,12 +40,12 @@
     <tr><td class="l"><code>permalink</code></td><td class="l">The message's URL in this reader.</td></tr>
   </tbody>
 </table>
-<p class="meta">Exports and saved corpora are capped at {{ "{:,}".format(export_max) }} messages. Messages withdrawn at a poster's request are never included. Pseudonyms are stable for one corpus or one exact search, so re-downloading gives the same ones, and differ between corpora. Pseudonymization covers the name and id fields only: names inside message text (signatures, "X wrote:" lines) remain.</p>
+<p class="meta">Exports and saved corpora top out at {{ "{:,}".format(export_max) }} messages each, and they never include withdrawn messages. Pseudonyms stay the same within one corpus or one exact search, so downloading again gives you the same ones, but they change from one corpus to the next. Pseudonymizing only covers the name and id fields, though. Names inside the message text (signatures, "X wrote:" lines) are still there.</p>
 
 <h2 class="section-head" id="terms">Terms of use</h2>
 <div class="placeholder">[Draft placeholder: terms wording to be written and reviewed.] Exports are for research and teaching. Don't republish contact details found in messages, honor withdrawals in anything you derive from an export by checking ids against the API before you publish, and cite the archive and the build.</div>
 {% if agreed %}
-<p class="ok-note">You've accepted these terms for this session. Export links on search results and corpus pages will download directly.</p>
+<p class="ok-note">Thanks! You've accepted the terms for this session, so export links on search results and corpus pages will download right away.</p>
 {% else %}
 <form class="form" method="post">
   <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -57,7 +56,7 @@
 {% endif %}
 
 <h2 class="section-head" id="api">API</h2>
-<p>Read-only JSON, versioned under <code>/api/v1/</code>, {{ api_rate }} requests a minute per client, {{ api_page }} results a page. Withdrawn messages and people are absent here too.</p>
+<p>The API is read-only JSON under <code>/api/v1/</code>, limited to {{ api_rate }} requests a minute per client, with {{ api_page }} results a page. Withdrawn messages and people are left out here too.</p>
 <table class="data">
   <tbody>
     <tr><td class="l"><code>GET /api/v1/messages/{id}</code></td><td class="l">One message, with its citations.</td></tr>

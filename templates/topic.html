@@ -5,7 +5,7 @@
 <p class="crumbs"><a href="{{ url_for('topics') }}">{{ ic('ic-topics', 'ic-sm ic-quiet') }} Topics</a></p>
 <div class="page-head">
   <h1>{{ t.label }}</h1>
-  <p class="lede">{{ "{:,}".format(t.n_threads) }} threads; most prominent in {{ t.peak_year }}. {% if t.labeled_by == "auto" %}This label is the model's top words; it has not been named by a person.{% else %}Named by {{ t.labeled_by }}.{% endif %}</p>
+  <p class="lede">{{ "{:,}".format(t.n_threads) }} threads; most prominent in {{ t.peak_year }}. {% if t.labeled_by == "auto" %}The label is just the model's top words, since nobody has named this topic yet.{% else %}Named by {{ t.labeled_by }}.{% endif %}</p>
 </div>
 <p class="meta">Words: {% for w in terms %}{{ w.term }}{{ ", " if not loop.last }}{% endfor %}</p>
 <figure class="viz chart hist">

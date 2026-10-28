@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-head">
   <h1>Flashpoints</h1>
-  <p class="lede">The list's most intense episodes: threads that drew many people quickly, and weeks when volume, departures, or talk about the list itself rose well above the ordinary. Labels describe activity only.</p>
+  <p class="lede">The list's most intense stretches: threads that pulled in a lot of people quickly, and weeks when volume, departures, or talk about the list itself ran well above normal. Each label counts messages and people, so you can see the scale of an episode before you open it.</p>
 </div>
 <div class="sift"><div class="sift-row">
   {% if kind == "thread" %}<b>Threads</b> · <a href="{{ url_for('flashpoints', kind='week') }}">Weeks</a>{% else %}<a href="{{ url_for('flashpoints') }}">Threads</a> · <b>Weeks</b>{% endif %}

@@ -22,7 +22,7 @@
 <table class="data"><thead><tr><th scope="col">Person</th><th scope="col">From</th><th scope="col">To</th></tr></thead>
 <tbody>{% for p in people %}<tr><td class="l"><a href="{{ url_for('person', pid=p.person_id) }}">{{ p.display_name }}</a></td><td>{{ p.first_at|when("%Y") }}</td><td>{{ p.last_at|when("%Y") }}</td></tr>{% endfor %}</tbody></table>
 {% endif %}
-{% if n_people > people|length %}<p class="meta">{{ n_people - people|length }} more {{ "person is" if n_people - people|length == 1 else "people are" }} counted but not named: fewer than 25 messages, or withdrawn.</p>{% endif %}
+{% if n_people > people|length %}<p class="meta">{{ n_people - people|length }} more {{ "person is" if n_people - people|length == 1 else "people are" }} counted here without being named, because they posted fewer than 25 messages or have withdrawn.</p>{% endif %}
 {% if jobs %}
 <h2 class="section-head">{{ ic('ic-job', 'ic-sm ic-quiet') }} Job ads</h2>
 <ol class="entries">{% for j in jobs %}<li class="entry"><div class="entry-meta"><span class="entry-date">{{ j.posted_at|when("%d %b %Y") }}</span><span>{{ j.rank_type }}</span></div>

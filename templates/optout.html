@@ -2,7 +2,7 @@
 {% block title %}Opt out · WPA-L Archive Reader{% endblock %}
 {% block content %}
 <h1>Withdraw your messages from this reader</h1>
-<p class="placeholder">[Draft placeholder; final wording to come.] If you posted to WPA-L and don't want your messages shown here, send this form. Once the request is confirmed, your messages stop appearing in browsing, threads, search, and permalinks. This does not change the copy on the Internet Archive.</p>
+<p>If you posted to WPA-L and you'd rather your messages not appear here, fill out this form. Once your request is confirmed, your messages come out of browsing, threads, search, permalinks and every other part of the site. The copy on the Internet Archive stays as it is, since this reader has no control over it.</p>
 {% if errors %}<ul class="err">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
 <form class="form" method="post">
   <input type="hidden" name="csrf" value="{{ csrf }}">
