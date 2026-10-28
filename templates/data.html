@@ -21,6 +21,11 @@
 <p class="cite">WPA-L Archive Reader. Built from <i>WPA-L Archive 1993–2021 Complete Uncompressed</i>, Internet Archive, 2021. Build {{ build }}. {{ url_for('home', _external=True) }}</p>
 <p class="meta">Each message page gives MLA 9 and APA 7 citations for that message. Cite a saved corpus by its URL and the build date shown on it.</p>
 
+<h2 class="section-head" id="download">{{ ic('ic-data', 'ic-sm ic-quiet') }} Download everything</h2>
+<p>The whole archive as one zip of spreadsheet-ready CSV files: every public message, one file per year (the fields below plus <code>parent_id</code>), and tables for {{ bundle_files|map('replace', '.csv', '')|map('replace', '_', ' ')|join(', ') }}. A README inside describes each file and its ids. The files open in Excel, Google Sheets, R or Python.</p>
+<p><a class="btn" href="{{ url_for('data_download') }}">Download the dataset (.zip{% if bundle_mb %}, {{ "%.0f"|format(bundle_mb) }} MB{% endif %})</a></p>
+<p class="meta">Withdrawn posters' messages are left out, as everywhere else here. The file is rebuilt after each update to the archive and after each withdrawal. You'll be asked to accept the terms below first.</p>
+
 <h2 class="section-head" id="fields">{{ ic('ic-data', 'ic-sm ic-quiet') }} Export fields</h2>
 <table class="data">
   <thead><tr><th scope="col">Field</th><th scope="col" class="l">Meaning</th></tr></thead>

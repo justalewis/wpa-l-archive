@@ -140,3 +140,40 @@ def test_corpus_needs_a_name_and_a_token(client):
     assert client.post("/corpus", data={"name": "x", "q": "placement"}).status_code == 400
     r = client.post("/corpus", data={"csrf": csrf(client), "name": "", "q": "placement"})
     assert r.status_code == 302 and "/corpus/" not in r.headers["Location"]
+
+
+def test_full_dataset_download(client, built, tmp_path, monkeypatch):
+    import zipfile
+    from wpal import bulk
+    _, db = built
+    monkeypatch.setenv("WPAL_EXPORT_DIR", str(tmp_path))
+    assert client.get("/data/download").status_code == 302  # terms first
+    agree(client)
+    assert client.get("/data/download").status_code == 202  # starts packaging
+    path = bulk.write_bundle(str(db), str(client.state), "http://test/")
+    r = client.get("/data/download")
+    assert r.status_code == 200 and r.headers["Content-Type"] == "application/zip"
+    z = zipfile.ZipFile(path)
+    names = z.namelist()
+    assert "README.txt" in names and "threads.csv" in names and "posters.csv" in names
+    rows = [row for n in names if n.startswith("messages/")
+            for row in csv.DictReader(io.TextIOWrapper(z.open(n), encoding="utf-8-sig"))]
+    con = sqlite3.connect(db)
+    assert len(rows) == con.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
+    assert not any("@" in r["body"] for r in rows)
+    z.close()
+    r.close()
+
+    # A withdrawal changes the key: the next bundle leaves the poster out and replaces the old file.
+    key = con.execute("SELECT poster_key FROM messages WHERE from_name = 'Rowan Ledger' LIMIT 1").fetchone()[0]
+    st = sqlite3.connect(client.state)
+    st.execute("INSERT INTO suppression (kind, key, label) VALUES ('poster', ?, 'test')", (key,))
+    st.commit()
+    st.close()
+    assert client.get("/data/download").status_code == 202
+    new = bulk.write_bundle(str(db), str(client.state), "http://test/")
+    assert new != path and not path.exists()
+    z = zipfile.ZipFile(new)
+    names = {r["poster_name"] for n in z.namelist() if n.startswith("messages/")
+             for r in csv.DictReader(io.TextIOWrapper(z.open(n), encoding="utf-8-sig"))}
+    assert names and "Rowan Ledger" not in names

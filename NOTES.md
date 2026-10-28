@@ -16,13 +16,20 @@ noindex, so search engines are asked not to list it.
 - Secret: `WPAL_SECRET` (Flask session key for the form's CSRF token).
 - The database is not in the image. Code deploys (`flyctl deploy --ha=false --remote-only`)
   ship only the app. To replace the database after a rebuild:
-  1. `gzip` `data/archive.db` (about 387 MB compressed).
+  1. `gzip` `data/archive.db` (about 560–630 MB compressed with the research-tool tables).
   2. Upload it with `flyctl ssh sftp put data/archive.db.gz /data/archive.db.gz`. In Git
      Bash, set `MSYS_NO_PATHCONV=1` first, or the remote path is rewritten to a Windows path.
   3. On the machine, `gunzip -c` it to `/data/archive.db.new` and `mv` it over
      `archive.db`.
   4. Compare MD5s with the local copy. Keep the machine awake during the upload: an SSH
      session alone doesn't count as traffic for auto-stop.
+  5. Package the full-dataset download ahead of the first visitor:
+     `flyctl ssh console -C "python -m wpal.bulk"` (about 1–3 minutes; it writes
+     `/data/exports/wpa-l-archive-data-{key}.zip`, about 170 MB, and deletes older ones).
+- The full-dataset zip (`/data/download`, `wpal/bulk.py`) is keyed on the build and the
+  suppression list. After a withdrawal, the next download request starts a fresh bundle in a
+  background thread and shows a "preparing" page until it's done. If the machine auto-stops
+  mid-build, the next request starts it again.
 - `python -m wpal.migrate` adds new indexes to a deployed database in place. The covering
   indexes matter: on a cold volume, any query that touches message bodies for every row
   took about 40 s. With them, every page measured 0.2–2 s.

@@ -20,8 +20,10 @@ import json
 import secrets
 import string
 
-from flask import Response, abort, jsonify, redirect, render_template, request, session, stream_with_context, url_for
+from flask import (Response, abort, jsonify, redirect, render_template, request, send_file, session,
+                   stream_with_context, url_for)
 
+from .. import bulk
 from .. import db as dbmod
 from ..app import NavItem
 from ..cite import citations
@@ -57,7 +59,9 @@ def register(app) -> None:
                 session["terms"] = True
             return redirect(request.form.get("next") or url_for("data_page"))
         meta = dict(app.con().execute("SELECT key, value FROM meta").fetchall())
-        return render_template("data.html", fields=FIELDS, build=build_id(), meta=meta, export_max=EXPORT_MAX,
+        ready = bulk_file()
+        return render_template("data.html", fields=FIELDS, bundle=ready, bundle_mb=ready and ready.stat().st_size / 1e6,
+                               bundle_files=[n for n, _, _ in bulk.TABLES], build=build_id(), meta=meta, export_max=EXPORT_MAX,
                                api_page=API_PAGE, api_rate=API_PER_MINUTE, agreed=session.get("terms"),
                                next=request.args.get("next", ""), active_nav="data")
 
@@ -66,6 +70,26 @@ def register(app) -> None:
         from ..stages.identity import PUBLIC_MIN_POSTS
         from .people import EDGE_MIN
         return render_template("ethics.html", person_min=PUBLIC_MIN_POSTS, edge_min=EDGE_MIN, active_nav="ethics")
+
+    # ---- the whole dataset -------------------------------------------------
+
+    def bulk_file():
+        path = bulk.bundle_path(app.config["ARCHIVE"], bulk.bundle_key(app.con()))
+        return path if path.exists() else None
+
+    @app.route("/data/download")
+    def data_download():
+        if not session.get("terms"):
+            return redirect(url_for("data_page", next=request.full_path) + "#terms")
+        key = bulk.bundle_key(app.con())
+        path = bulk.bundle_path(app.config["ARCHIVE"], key)
+        if path.exists():
+            return send_file(path, as_attachment=True, download_name=f"{bulk.STEM}-{build_id()[:10]}.zip",
+                             mimetype="application/zip", max_age=3600)
+        bulk.build_in_background(app.config["ARCHIVE"], app.config["REQUESTS"], request.url_root, key)
+        return render_template("error.html", code="Preparing the download",
+                               msg="The full dataset is being packaged. That takes a few minutes the first time "
+                                   "after an update. Reload this page to check; the download starts when it's ready."), 202
 
     # ---- corpora -----------------------------------------------------------
 
