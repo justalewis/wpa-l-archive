@@ -158,11 +158,11 @@ def write_bundle(archive: str, requests: str, base_url: str) -> Path:
         tmp.unlink(missing_ok=True)
         return dest
     for old in [*dest.parent.glob(f"{STEM}-*.zip"), *dest.parent.glob(f"{STEM}-*.partial")]:
-        if old != dest and not (old.suffix == ".partial" and time.time() - old.stat().st_mtime < 3600):
-            try:
+        try:
+            if old != dest and not (old.suffix == ".partial" and time.time() - old.stat().st_mtime < 3600):
                 old.unlink()
-            except OSError:  # still being sent to someone; next build clears it
-                pass
+        except OSError:  # gone already (another builder's partial), or still being sent; next build clears it
+            pass
     return dest
 
 
