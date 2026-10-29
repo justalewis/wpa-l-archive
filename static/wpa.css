@@ -1125,6 +1125,7 @@ fieldset.f label { font-weight: 400; margin: var(--space-1) 0; }
 
 /* -- Plain charts drawn server-side ---------------------------- */
 .chart svg { width: 100%; height: auto; display: block; }
+.chart svg.ic { width: var(--ic-size, 1.5rem); height: var(--ic-size, 1.5rem); display: inline-block; }
 .chart .bar { fill: var(--cat-1); }
 .chart .bar-alt { fill: var(--cat-other); }
 .chart .hit { fill: transparent; }
